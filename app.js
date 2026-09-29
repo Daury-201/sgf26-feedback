@@ -105,6 +105,30 @@ window.selectNps = function(btn, val) {
     updateProgress();
 };
 
+window.selectRifas = function(btn, val) {
+    const bar = document.getElementById("rifas-bar");
+    if (bar) {
+        bar.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    }
+    btn.classList.add("active");
+    const inp = document.getElementById("inp-rifas-rating");
+    if (inp) inp.value = val;
+    clearError("err-rifas");
+    updateProgress();
+};
+
+function initRifasBar() {
+    const bar = document.getElementById("rifas-bar");
+    if (bar) {
+        bar.addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+            const val = btn.getAttribute("data-rifas");
+            window.selectRifas(btn, val);
+        });
+    }
+}
+
 // =========================================================================
 // INICIALIZACIÓN A PRUEBA DE FALLOS
 // =========================================================================
@@ -114,6 +138,7 @@ function initAll() {
     initGameSelector();
     initStarRating();
     initSegmentedRatings();
+    initRifasBar();
     initNpsBar();
     initInputListeners();
     updateProgress();
@@ -373,7 +398,7 @@ function initInputListeners() {
 
 function updateProgress() {
     let score = 0;
-    const maxScore = 7; // Exactamente 7 pasos obligatorios
+    const maxScore = 8; // Exactamente 8 pasos obligatorios
 
     // 1. GamerTag completado (Paso 1)
     if (inpGamertag && inpGamertag.value.trim().length >= 2) score += 1;
@@ -393,13 +418,17 @@ function updateProgress() {
     ].filter(Boolean).length;
     if (metricsFilled >= 4) score += 1;
 
-    // 5. NPS (0-10) (Paso 4)
+    // 5. Gestión de Rifas (1-10) (Paso 4)
+    const inpRifas = document.getElementById("inp-rifas-rating");
+    if (inpRifas && inpRifas.value !== "") score += 1;
+
+    // 6. NPS (0-10) (Paso 5)
     if (inpNps && inpNps.value !== "") score += 1;
 
-    // 6. Pregunta 1 obligatoria: Qué más gustó (Paso 5)
+    // 7. Pregunta 1 obligatoria: Qué más gustó (Paso 6)
     if (inpLikedMost && inpLikedMost.value.trim().length >= 2) score += 1;
 
-    // 7. Pregunta 2 obligatoria: Mejoras o 2027 (Paso 5)
+    // 8. Pregunta 2 obligatoria: Mejoras o 2027 (Paso 6)
     if (inpSuggestions && inpSuggestions.value.trim().length >= 2) score += 1;
 
     const percentage = Math.min(100, Math.round((score / maxScore) * 100));
@@ -420,11 +449,12 @@ function updateProgress() {
     // Mensaje de etapa dinámico
     if (progressStepText) {
         if (percentage === 0) progressStepText.textContent = "Comienza la encuesta";
-        else if (percentage < 30) progressStepText.textContent = "Paso 1: Identidad y Torneo";
-        else if (percentage < 50) progressStepText.textContent = "Paso 2: Calificación General";
-        else if (percentage < 70) progressStepText.textContent = "Paso 3: Métricas y Logística";
-        else if (percentage < 85) progressStepText.textContent = "Paso 4: Recomendación (NPS)";
-        else if (percentage < 100) progressStepText.textContent = "Paso 5: Completa ambas preguntas";
+        else if (percentage < 25) progressStepText.textContent = "Paso 1: Identidad y Torneo";
+        else if (percentage < 40) progressStepText.textContent = "Paso 2: Calificación General";
+        else if (percentage < 60) progressStepText.textContent = "Paso 3: Métricas de Calidad";
+        else if (percentage < 75) progressStepText.textContent = "Paso 4: Gestión de Rifas";
+        else if (percentage < 90) progressStepText.textContent = "Paso 5: Recomendación (NPS)";
+        else if (percentage < 100) progressStepText.textContent = "Paso 6: Completa tus comentarios";
         else progressStepText.textContent = "¡100% Completado! Listo para enviar";
     }
 }
@@ -460,6 +490,15 @@ if (form) {
         if (!selectedStarValue || selectedStarValue === 0) {
             showError("err-overall", "Por favor califica el evento con las estrellas neón.");
             if (!firstErrorElement) firstErrorElement = document.getElementById("stars-overall");
+            hasErrors = true;
+        }
+
+        // Validar Gestión de Rifas (1-10)
+        const inpRifas = document.getElementById("inp-rifas-rating");
+        const rifasVal = inpRifas ? inpRifas.value.trim() : "";
+        if (!rifasVal) {
+            showError("err-rifas", "Por favor califica del 1 al 10 la manera en que se gestionaron las rifas.");
+            if (!firstErrorElement) firstErrorElement = document.getElementById("section-rifas");
             hasErrors = true;
         }
 
@@ -505,6 +544,7 @@ if (form) {
             metricHardware: document.getElementById("inp-metric-hardware")?.value || "N/A",
             metricStaff: document.getElementById("inp-metric-staff")?.value || "N/A",
             metricAtmosphere: document.getElementById("inp-metric-atmosphere")?.value || "N/A",
+            rifasRating: rifasVal,
             nps: inpNps?.value || "N/A",
             likedMost: inpLikedMost?.value.trim() || "",
             suggestions: inpSuggestions?.value.trim() || "",

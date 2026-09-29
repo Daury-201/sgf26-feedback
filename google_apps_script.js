@@ -51,7 +51,7 @@ function doPost(e) {
 
     // BLOQUEO ANTI-DUPLICADOS: Si el participante ya completó la encuesta, no duplicar fila
     if (emailRecibido && sheet.getLastRow() > 1) {
-      var correosRegistrados = sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).getValues();
+      var correosRegistrados = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues();
       for (var k = 0; k < correosRegistrados.length; k++) {
         if (String(correosRegistrados[k][0]).trim().toLowerCase() === emailRecibido) {
           return ContentService
@@ -67,7 +67,6 @@ function doPost(e) {
     // Encabezados oficiales si la hoja está vacía
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
-        "ID Ticket",
         "Fecha Registro",
         "GamerTag",
         "Email",
@@ -77,6 +76,7 @@ function doPost(e) {
         "Hardware y Setups",
         "Staff y Jueces",
         "Ambiente y Audio",
+        "Gestión de Rifas (1-10)",
         "NPS (0-10)",
         "Lo que más gustó",
         "Sugerencias y 2027",
@@ -91,7 +91,6 @@ function doPost(e) {
 
     // Insertar fila con la respuesta
     sheet.appendRow([
-      data.id || "N/A",
       data.dateFormatted || new Date().toLocaleString(),
       data.gamertag || "Competidor SGF",
       data.email || "",
@@ -101,6 +100,7 @@ function doPost(e) {
       data.metricHardware || "",
       data.metricStaff || "",
       data.metricAtmosphere || "",
+      data.rifasRating || "",
       data.nps || "",
       data.likedMost || "",
       data.suggestions || "",
@@ -108,7 +108,7 @@ function doPost(e) {
     ]);
 
     return ContentService
-      .createTextOutput(JSON.stringify({ status: "success", id: data.id }))
+      .createTextOutput(JSON.stringify({ status: "success" }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
@@ -142,7 +142,7 @@ function doGet(e) {
       var yaRespondio = false;
 
       if (sheet && sheet.getLastRow() > 1) {
-        var emails = sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).getValues();
+        var emails = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues();
         for (var i = 0; i < emails.length; i++) {
           if (String(emails[i][0]).trim().toLowerCase() === targetEmail) {
             yaRespondio = true;
@@ -178,7 +178,7 @@ function doGet(e) {
         }
       }
       if (!tieneContenido) continue;
-      if (!row[0] && !row[2] && !row[5]) continue;
+      if (!row[0] && !row[1] && !row[2]) continue;
 
       var item = {};
       for (var c = 0; c < headers.length; c++) {

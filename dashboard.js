@@ -176,7 +176,9 @@ function initControls() {
 // =========================================================================
 async function loadDashboardData(isBackground = false) {
     let combined = [];
-    let sheetsConnected = false;
+
+    // Limpiar de inmediato cualquier respuesta de prueba guardada localmente
+    localStorage.removeItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
 
     // 1. Consultar Webhook oficial de Google Sheets
     try {
@@ -192,22 +194,19 @@ async function loadDashboardData(isBackground = false) {
                 try {
                     json = JSON.parse(text);
                 } catch(err) {
-                    console.warn("Respuesta no es JSON válido:", err);
+                    console.warn("Aviso: El webhook respondió pero aún no es JSON:", text);
                 }
 
                 if (json && json.status === "success" && Array.isArray(json.data)) {
-                    sheetsConnected = true;
-
                     // Descartar filas vacías o borradas en Google Sheets
                     const validData = json.data.filter(r => {
                         const tag = (r["GamerTag"] || r.gamertag || "").toString().trim();
-                        const id = (r["ID Ticket"] || r.id || "").toString().trim();
+                        const email = (r["Email"] || r.email || "").toString().trim();
                         const stars = r["Calificación General"] || r.overallRating;
-                        return tag !== "" || (id !== "" && id !== "SGF-SHEET" && id !== "N/A") || (stars !== "" && stars !== undefined);
+                        return tag !== "" || email !== "" || (stars !== "" && stars !== undefined);
                     });
 
                     combined = validData.map(r => ({
-                        id: r["ID Ticket"] || r.id || "SGF-SHEET",
                         dateFormatted: r["Fecha Registro"] || r.dateFormatted || "Reciente",
                         gamertag: r["GamerTag"] || r.gamertag || "Competidor",
                         email: r["Email"] || r.email || "",
@@ -217,20 +216,11 @@ async function loadDashboardData(isBackground = false) {
                         metricHardware: parseInt(r["Hardware y Setups"] || r.metricHardware, 10) || 5,
                         metricStaff: parseInt(r["Staff y Jueces"] || r.metricStaff, 10) || 5,
                         metricAtmosphere: parseInt(r["Ambiente y Audio"] || r.metricAtmosphere, 10) || 5,
+                        rifasRating: parseInt(r["Gestión de Rifas (1-10)"] || r.rifasRating, 10) || null,
                         nps: parseInt(r["NPS (0-10)"] || r.nps, 10) || 10,
                         likedMost: r["Lo que más gustó"] || r.likedMost || "",
                         suggestions: r["Sugerencias y 2027"] || r.suggestions || ""
                     }));
-
-                    // SINCRONIZACIÓN AUTOMÁTICA DE BORRADO:
-                    // Si en Google Sheets se borraron datos (o está vacía), limpiar también localStorage
-                    // para que no sigan apareciendo respuestas viejas de prueba
-                    if (combined.length === 0) {
-                        localStorage.removeItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
-                        localStorage.removeItem("sgf26_user_feedback_submitted");
-                        localStorage.removeItem("sgf26_submitted_gamertag");
-                        localStorage.removeItem("sgf26_submitted_game");
-                    }
                 }
             }
         }
@@ -238,28 +228,14 @@ async function loadDashboardData(isBackground = false) {
         console.warn("Sincronización con Google Sheets:", netErr);
     }
 
-    // 2. Solo si Google Sheets NO respondió (sin internet / sin webhook), recurrir a localStorage
-    if (!sheetsConnected) {
-        try {
-            const localRaw = localStorage.getItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
-            if (localRaw) {
-                const localList = JSON.parse(localRaw);
-                if (Array.isArray(localList)) {
-                    combined = localList;
-                }
-            }
-        } catch (e) {
-            console.warn("Lectura de localStorage omitida:", e);
-        }
-    }
-
+    // Los datos reflejados son EXCLUSIVAMENTE los que están en Google Sheets
     allResponses = combined;
     applyFilters();
 
     // Actualizar indicador de fuente
     const sourceInd = document.getElementById("source-indicator");
     if (sourceInd) {
-        sourceInd.innerHTML = `<i class="fa-solid fa-database"></i> ${allResponses.length} Respuestas Oficiales`;
+        sourceInd.innerHTML = `<i class="fa-solid fa-database"></i> ${allResponses.length} Registros en Google Sheets`;
     }
 }
 
@@ -336,6 +312,8 @@ function renderKpis() {
         const elNpsBreakdown = document.getElementById("kpi-nps-breakdown");
         const elHw = document.getElementById("kpi-hardware-score");
         const elHwBadge = document.getElementById("kpi-hw-badge");
+        const elRifas = document.getElementById("kpi-rifas-score");
+        const elRifasBadge = document.getElementById("kpi-rifas-badge");
 
         if (elCsat) elCsat.textContent = "0.0";
         if (elCsatPct) elCsatPct.textContent = "Esperando respuestas";
@@ -345,6 +323,8 @@ function renderKpis() {
         if (elNpsBreakdown) elNpsBreakdown.textContent = "0% Promotores • 0% Detractores";
         if (elHw) elHw.textContent = "0.0";
         if (elHwBadge) elHwBadge.textContent = "N/A";
+        if (elRifas) elRifas.textContent = "0.0";
+        if (elRifasBadge) { elRifasBadge.textContent = "N/A"; elRifasBadge.className = "kpi-badge badge-gold"; }
         return;
     }
 
@@ -431,6 +411,36 @@ function renderKpis() {
     const elHwBadge = document.getElementById("kpi-hw-badge");
     if (elHw) elHw.textContent = avgHw;
     if (elHwBadge) elHwBadge.textContent = avgHw >= 4.5 ? "TOP TIER" : "APROBADO";
+
+    // Gestión de Rifas Promedio (1-10)
+    let sumRifas = 0;
+    let countRifas = 0;
+    filteredResponses.forEach(r => {
+        const val = parseFloat(r.rifasRating);
+        if (!isNaN(val) && val > 0) {
+            sumRifas += val;
+            countRifas++;
+        }
+    });
+    const avgRifas = countRifas > 0 ? (sumRifas / countRifas).toFixed(1) : "0.0";
+    const elRifas = document.getElementById("kpi-rifas-score");
+    const elRifasBadge = document.getElementById("kpi-rifas-badge");
+    if (elRifas) elRifas.textContent = countRifas > 0 ? avgRifas : "0.0";
+    if (elRifasBadge) {
+        if (countRifas === 0) {
+            elRifasBadge.textContent = "N/A";
+            elRifasBadge.className = "kpi-badge badge-gold";
+        } else if (avgRifas >= 8.5) {
+            elRifasBadge.textContent = "EXCELENTE";
+            elRifasBadge.className = "kpi-badge badge-purple";
+        } else if (avgRifas >= 7.0) {
+            elRifasBadge.textContent = "BUENO";
+            elRifasBadge.className = "kpi-badge badge-emerald";
+        } else {
+            elRifasBadge.textContent = "POR MEJORAR";
+            elRifasBadge.className = "kpi-badge badge-gold";
+        }
+    }
 }
 
 // =========================================================================
@@ -749,7 +759,7 @@ function renderTable() {
     if (filteredResponses.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-dim);">
+                <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-dim);">
                     <i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block; opacity: 0.4;"></i>
                     No hay respuestas que mostrar con los filtros actuales.
                 </td>
@@ -780,21 +790,26 @@ function renderTable() {
             else npsBadge = `<span class="nps-badge nps-detractor">${npsVal} • Detractor</span>`;
         }
 
+        const rifasHtml = (r.rifasRating !== null && r.rifasRating !== undefined)
+            ? `<span class="pill-tag pill-gold" style="font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-gift"></i> ${r.rifasRating}/10</span>`
+            : `<span style="color: var(--text-dim); font-size: 0.75rem;">-</span>`;
+
         const comments = [r.likedMost, r.suggestions].filter(Boolean).join(" • ");
         const commentPreview = comments.length > 60 ? comments.substring(0, 58) + "..." : (comments || "Sin comentarios");
 
         return `
             <tr>
-                <td><code style="color: #c084fc; font-weight: 700;">${escapeHtml(r.id || "N/A")}</code></td>
-                <td style="color: var(--text-muted); font-size: 0.75rem;">${escapeHtml(r.dateFormatted || "Reciente")}</td>
+                <td style="color: var(--text-muted); font-size: 0.75rem; white-space: nowrap;">${escapeHtml(r.dateFormatted || "Reciente")}</td>
                 <td style="font-weight: 700; color: #ffffff;">${escapeHtml(r.gamertag || "Anónimo")}</td>
+                <td style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(r.email || "-")}</td>
                 <td><span class="pill-tag ${tClass}">${escapeHtml(r.tournament || "General")}</span></td>
                 <td>${starsHtml}</td>
                 <td style="font-size: 0.75rem; color: var(--text-muted);">
                     H:${r.metricHardware || "-"} P:${r.metricPunctuality || "-"} S:${r.metricStaff || "-"}
                 </td>
+                <td>${rifasHtml}</td>
                 <td>${npsBadge}</td>
-                <td style="max-width: 280px; font-size: 0.78rem; color: var(--text-light); line-height: 1.4;" title="${escapeHtml(comments)}">
+                <td style="max-width: 260px; font-size: 0.78rem; color: var(--text-light); line-height: 1.4;" title="${escapeHtml(comments)}">
                     ${escapeHtml(commentPreview)}
                 </td>
             </tr>
@@ -822,14 +837,13 @@ function exportToCsv(dataList, filename) {
     }
 
     const headers = [
-        "ID Ticket", "Fecha Registro", "GamerTag", "Email", "Torneo",
+        "Fecha Registro", "GamerTag", "Email", "Torneo",
         "Calificación General", "Puntualidad", "Hardware y Setups",
-        "Staff y Jueces", "Ambiente y Audio", "NPS",
+        "Staff y Jueces", "Ambiente y Audio", "Gestión de Rifas (1-10)", "NPS",
         "Lo que más gustó", "Sugerencias y 2027"
     ];
 
     const rows = dataList.map(r => [
-        `"${(r.id || "").replace(/"/g, '""')}"`,
         `"${(r.dateFormatted || "").replace(/"/g, '""')}"`,
         `"${(r.gamertag || "").replace(/"/g, '""')}"`,
         `"${(r.email || "").replace(/"/g, '""')}"`,
@@ -839,6 +853,7 @@ function exportToCsv(dataList, filename) {
         r.metricHardware || "",
         r.metricStaff || "",
         r.metricAtmosphere || "",
+        (r.rifasRating !== null && r.rifasRating !== undefined) ? r.rifasRating : "",
         r.nps || "",
         `"${(r.likedMost || "").replace(/"/g, '""')}"`,
         `"${(r.suggestions || "").replace(/"/g, '""')}"`

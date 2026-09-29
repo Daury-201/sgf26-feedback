@@ -468,11 +468,47 @@
             </section>
 
             <!-- =========================================================
-                 PASO 4: RECOMENDACIÓN
+                 PASO 4: GESTIÓN DE RIFAS Y PREMIOS
+                 ========================================================= -->
+            <section class="survey-section" id="section-rifas">
+                <div class="section-header">
+                    <span class="section-number">04</span>
+                    <div class="section-header-text">
+                        <h3>Gestión de Rifas</h3>
+                        <p>Califica del 1 al 10 la manera en la que se gestionaron las rifas en el festival.</p>
+                    </div>
+                </div>
+
+                <div class="nps-card">
+                    <p class="nps-prompt">En una escala del <strong>1 al 10</strong>, ¿cómo calificarías la manera en la que se gestionaron las rifas? <span class="req">*</span></p>
+                    <div class="nps-segmented-bar" id="rifas-bar">
+                        <button type="button" onclick="selectRifas(this, 1)" data-rifas="1">1</button>
+                        <button type="button" onclick="selectRifas(this, 2)" data-rifas="2">2</button>
+                        <button type="button" onclick="selectRifas(this, 3)" data-rifas="3">3</button>
+                        <button type="button" onclick="selectRifas(this, 4)" data-rifas="4">4</button>
+                        <button type="button" onclick="selectRifas(this, 5)" data-rifas="5">5</button>
+                        <button type="button" onclick="selectRifas(this, 6)" data-rifas="6">6</button>
+                        <button type="button" onclick="selectRifas(this, 7)" data-rifas="7">7</button>
+                        <button type="button" onclick="selectRifas(this, 8)" data-rifas="8">8</button>
+                        <button type="button" onclick="selectRifas(this, 9)" data-rifas="9">9</button>
+                        <button type="button" onclick="selectRifas(this, 10)" data-rifas="10">10</button>
+                    </div>
+                    <div class="nps-legend">
+                        <span class="nps-detractor"><i class="fa-solid fa-thumbs-down"></i> Mala gestión (1 - 4)</span>
+                        <span class="nps-neutral">Regular (5 - 7)</span>
+                        <span class="nps-promoter"><i class="fa-solid fa-gift"></i> ¡Excelente gestión! (8 - 10)</span>
+                    </div>
+                    <input type="hidden" id="inp-rifas-rating" name="rifasRating" required>
+                    <span class="field-error-msg" id="err-rifas">Por favor califica la gestión de las rifas del 1 al 10.</span>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PASO 5: RECOMENDACIÓN
                  ========================================================= -->
             <section class="survey-section" id="section-nps">
                 <div class="section-header">
-                    <span class="section-number">04</span>
+                    <span class="section-number">05</span>
                     <div class="section-header-text">
                         <h3>Índice de Recomendación</h3>
                         <p>¿Qué tan probable es que recomiendes el SGF a tus amigos gamers?</p>
@@ -504,11 +540,11 @@
             </section>
 
             <!-- =========================================================
-                 PASO 5: FEEDBACK ABIERTO Y SUGERENCIAS
+                 PASO 6: FEEDBACK ABIERTO Y SUGERENCIAS
                  ========================================================= -->
             <section class="survey-section" id="section-open-feedback">
                 <div class="section-header">
-                    <span class="section-number">05</span>
+                    <span class="section-number">06</span>
                     <div class="section-header-text">
                         <h3>Comentarios y Futuro del Festival</h3>
                         <p>Tus ideas definen directamente las reglas y juegos del SGF 2027.</p>
