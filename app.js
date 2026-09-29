@@ -52,9 +52,9 @@ let currentHoveredStar = 0;
 let selectedStarValue = 0;
 
 // =========================================================================
-// INICIALIZACIÓN
+// INICIALIZACIÓN A PRUEBA DE FALLOS
 // =========================================================================
-document.addEventListener("DOMContentLoaded", () => {
+function initAll() {
     initUrlParams();
     initGameSelector();
     initStarRating();
@@ -63,7 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
     initInputListeners();
     initActionButtons();
     updateProgress();
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAll);
+} else {
+    initAll();
+}
 
 // =========================================================================
 // 1. AUTO-RELLENO POR PARÁMETROS URL (?email=...&gamertag=...&game=...)
@@ -87,7 +93,8 @@ function initUrlParams() {
     const game = params.get("game") || params.get("torneo");
     if (game) {
         const normalizedGame = game.toLowerCase().trim();
-        const targetOption = Array.from(gameCardOptions).find(opt => {
+        const cards = document.querySelectorAll(".game-card-option");
+        const targetOption = Array.from(cards).find(opt => {
             const key = (opt.getAttribute("data-game-key") || "").toLowerCase();
             return key === normalizedGame || key.includes(normalizedGame) || normalizedGame.includes(key);
         });
@@ -99,10 +106,22 @@ function initUrlParams() {
 }
 
 // =========================================================================
-// 2. SELECTOR DE JUEGOS / TORNEOS
+// 2. SELECTOR DE JUEGOS / TORNEOS (DELEGACIÓN + LISTENER DIRECTO)
 // =========================================================================
 function initGameSelector() {
-    gameCardOptions.forEach(card => {
+    const grid = document.getElementById("game-select-grid");
+    if (grid) {
+        grid.addEventListener("click", (e) => {
+            const card = e.target.closest(".game-card-option");
+            if (!card) return;
+            selectGameOption(card);
+            clearError("err-game");
+            updateProgress();
+        });
+    }
+
+    const cards = document.querySelectorAll(".game-card-option");
+    cards.forEach(card => {
         card.addEventListener("click", () => {
             selectGameOption(card);
             clearError("err-game");
@@ -112,68 +131,77 @@ function initGameSelector() {
 }
 
 function selectGameOption(targetCard) {
-    gameCardOptions.forEach(c => c.classList.remove("selected"));
+    const cards = document.querySelectorAll(".game-card-option");
+    cards.forEach(c => c.classList.remove("selected"));
     targetCard.classList.add("selected");
     const gameName = targetCard.getAttribute("data-game-name") || "";
-    inpSelectedGame.value = gameName;
+    const inp = document.getElementById("inp-selected-game");
+    if (inp) inp.value = gameName;
 }
 
-// =========================================================================
 // =========================================================================
 // 3. ESTRELLAS NEÓN DE CALIFICACIÓN GENERAL (ESTABLE SIN JITTER)
 // =========================================================================
 function initStarRating() {
     const starsContainer = document.getElementById("stars-overall");
+    if (!starsContainer) return;
 
-    starButtons.forEach(btn => {
+    // Delegación de clic inmediata
+    starsContainer.addEventListener("click", (e) => {
+        const btn = e.target.closest(".star-btn");
+        if (!btn) return;
         const val = parseInt(btn.getAttribute("data-value"), 10);
+        selectedStarValue = val;
+        const inpOverall = document.getElementById("inp-overall-rating");
+        if (inpOverall) inpOverall.value = val;
+        renderStars(val, true);
+        clearError("err-overall");
+        const badge = document.getElementById("rating-feedback-label");
+        if (badge && RATING_TEXTS[val]) {
+            badge.textContent = RATING_TEXTS[val];
+            badge.classList.add("active");
+        }
+        updateProgress();
+    });
 
-        // Hover effect: llena e ilumina suavemente de 1 a val
+    const stars = starsContainer.querySelectorAll(".star-btn");
+    stars.forEach(btn => {
+        const val = parseInt(btn.getAttribute("data-value"), 10);
         btn.addEventListener("mouseenter", () => {
             renderStars(val, false);
-            if (RATING_TEXTS[val]) {
-                ratingBadge.textContent = RATING_TEXTS[val];
-                ratingBadge.classList.add("active");
+            const badge = document.getElementById("rating-feedback-label");
+            if (badge && RATING_TEXTS[val]) {
+                badge.textContent = RATING_TEXTS[val];
+                badge.classList.add("active");
             }
-        });
-
-        // Click to choose: fija el valor y lanza una ola animada
-        btn.addEventListener("click", () => {
-            selectedStarValue = val;
-            inpOverallRating.value = val;
-            renderStars(val, true); // true activa la animación de ola/pop
-            clearError("err-overall");
-            ratingBadge.textContent = RATING_TEXTS[val];
-            ratingBadge.classList.add("active");
-            updateProgress();
         });
     });
 
-    // Evento mouseleave en el CONTENEDOR padre completo (evita jitter entre estrellas)
-    if (starsContainer) {
-        starsContainer.addEventListener("mouseleave", () => {
-            renderStars(selectedStarValue, false);
+    starsContainer.addEventListener("mouseleave", () => {
+        renderStars(selectedStarValue, false);
+        const badge = document.getElementById("rating-feedback-label");
+        if (badge) {
             if (selectedStarValue > 0 && RATING_TEXTS[selectedStarValue]) {
-                ratingBadge.textContent = RATING_TEXTS[selectedStarValue];
-                ratingBadge.classList.add("active");
+                badge.textContent = RATING_TEXTS[selectedStarValue];
+                badge.classList.add("active");
             } else {
-                ratingBadge.textContent = "Selecciona de 1 a 5 estrellas";
-                ratingBadge.classList.remove("active");
+                badge.textContent = "Selecciona de 1 a 5 estrellas";
+                badge.classList.remove("active");
             }
-        });
-    }
+        }
+    });
 }
 
 function renderStars(activeCount, isClick = false) {
-    starButtons.forEach(btn => {
+    const stars = document.querySelectorAll("#stars-overall .star-btn");
+    stars.forEach(btn => {
         const val = parseInt(btn.getAttribute("data-value"), 10);
         const icon = btn.querySelector("i");
         if (val <= activeCount) {
             btn.classList.add("active");
             if (isClick && icon) {
-                // Animación escalonada fluida (wave pop)
                 icon.style.animation = "none";
-                void icon.offsetWidth; // forzar reflow
+                void icon.offsetWidth;
                 icon.style.animation = `starPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${(val - 1) * 0.05}s forwards`;
             }
         } else {
@@ -187,38 +215,42 @@ function renderStars(activeCount, isClick = false) {
 // 4. RATINGS SEGMENTADOS (LOGÍSTICA 1-5)
 // =========================================================================
 function initSegmentedRatings() {
-    const segmentedContainers = document.querySelectorAll(".segmented-rating");
-    segmentedContainers.forEach(container => {
-        const metricName = container.getAttribute("data-name");
-        const hiddenInp = document.getElementById(`inp-metric-${metricName}`);
-        const buttons = container.querySelectorAll("button");
-
-        buttons.forEach(btn => {
-            btn.addEventListener("click", () => {
-                buttons.forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                if (hiddenInp) {
-                    hiddenInp.value = btn.getAttribute("data-val");
-                }
-                updateProgress();
-            });
+    const grid = document.querySelector(".metrics-grid");
+    if (grid) {
+        grid.addEventListener("click", (e) => {
+            const btn = e.target.closest(".segmented-rating button");
+            if (!btn) return;
+            const container = btn.closest(".segmented-rating");
+            if (!container) return;
+            const metricName = container.getAttribute("data-name");
+            const hiddenInp = document.getElementById(`inp-metric-${metricName}`);
+            container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            if (hiddenInp) {
+                hiddenInp.value = btn.getAttribute("data-val");
+            }
+            updateProgress();
         });
-    });
+    }
 }
 
 // =========================================================================
 // 5. SELECTOR NET PROMOTER SCORE (NPS 0-10)
 // =========================================================================
 function initNpsBar() {
-    npsButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            npsButtons.forEach(b => b.classList.remove("active"));
+    const bar = document.getElementById("nps-bar");
+    if (bar) {
+        bar.addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+            bar.querySelectorAll("button").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             const npsVal = btn.getAttribute("data-nps");
-            inpNps.value = npsVal;
+            const inp = document.getElementById("inp-nps");
+            if (inp) inp.value = npsVal;
             updateProgress();
         });
-    });
+    }
 }
 
 // =========================================================================

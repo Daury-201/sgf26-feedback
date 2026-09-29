@@ -1,7 +1,7 @@
 /**
  * STUDENTS GAMING FESTIVAL 2026 (SGF 2026)
  * Google Apps Script - Webhook Receptor de Feedback
- * 
+ *
  * INSTRUCCIONES DE INSTALACIÓN (100% GRATIS):
  * 1. Ve a https://sheets.new y crea una hoja de cálculo en blanco llamada "SGF 2026 - Respuestas Feedback".
  * 2. En la primera fila (encabezados), coloca:
