@@ -73,24 +73,36 @@
         <!-- Formulario Interactivo -->
         <form id="feedback-form" novalidate>
 
-            <!-- Inputs Ocultos de Identidad (Cargados opcionalmente por URL ?gamertag=...&email=...) -->
-            <input type="hidden" id="inp-gamertag" name="gamertag" value="Competidor">
+            <!-- Input Oculto de Email (Opcional, cargado si viene por URL) -->
             <input type="hidden" id="inp-email" name="email" value="">
 
             <!-- =========================================================
-                 PASO 1: TORNEO O ROL EN EL FESTIVAL
+                 PASO 1: IDENTIDAD Y TORNEO EN EL FESTIVAL
                  ========================================================= -->
             <section class="survey-section" id="section-identity">
                 <div class="section-header">
                     <span class="section-number">01</span>
                     <div class="section-header-text">
-                        <h3>Torneo o Rol en el Festival</h3>
-                        <p>Selecciona el juego en el que competiste o si asististe como espectador.</p>
+                        <h3>Identidad y Torneo</h3>
+                        <p>Ingresa tu GamerTag y selecciona el juego en el que competiste.</p>
                     </div>
+                </div>
+
+                <!-- Input Oficial de GamerTag -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label for="inp-gamertag" style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; color: #f1f5f9; margin-bottom: 8px;">
+                        <span>Tu GamerTag o Nombre de Competidor <span class="req">*</span></span>
+                        <span style="font-size: 0.75rem; color: #c084fc; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Registro Oficial</span>
+                    </label>
+                    <input type="text" id="inp-gamertag" name="gamertag" placeholder="Ej. Daury, MasterChief, Carlos G." required autocomplete="nickname">
+                    <span class="field-error-msg" id="err-gamertag">Por favor escribe tu GamerTag o nombre para continuar.</span>
                 </div>
 
                 <!-- Selector de Torneo Interactivo con Imágenes Oficiales -->
                 <div class="form-group">
+                    <label style="display: block; font-weight: 700; color: #f1f5f9; margin-bottom: 10px;">
+                        Torneo en el que participaste <span class="req">*</span>
+                    </label>
                     <div class="game-select-grid" id="game-select-grid">
                         <div class="game-card-option" data-game-key="smash" data-game-name="Super Smash Bros. Ultimate">
                             <div class="game-thumb">

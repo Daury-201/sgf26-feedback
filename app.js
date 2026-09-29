@@ -227,6 +227,12 @@ function initNpsBar() {
 // 6. ESCUCHA DE INPUTS Y CÁLCULO DE PROGRESO
 // =========================================================================
 function initInputListeners() {
+    if (inpGamertag) {
+        inpGamertag.addEventListener("input", () => {
+            clearError("err-gamertag");
+            updateProgress();
+        });
+    }
     if (inpLikedMost) {
         inpLikedMost.addEventListener("input", () => {
             clearError("err-comments");
@@ -244,7 +250,10 @@ function initInputListeners() {
 function updateProgress() {
     // Calculamos el avance basado en hitos reales y simplificados:
     let score = 0;
-    const maxScore = 5; // 5 pasos clave
+    const maxScore = 6; // 6 pasos clave
+
+    // 0. GamerTag completado
+    if (inpGamertag && inpGamertag.value.trim().length >= 2) score += 1;
 
     // 1. Torneo seleccionado (Paso 1)
     if (inpSelectedGame && inpSelectedGame.value.trim().length > 0) score += 1;
@@ -278,7 +287,7 @@ function updateProgress() {
     // Mensaje de etapa dinámico
     if (progressStepText) {
         if (percentage === 0) progressStepText.textContent = "Comienza la encuesta";
-        else if (percentage < 35) progressStepText.textContent = "Paso 1: Torneo Seleccionado";
+        else if (percentage < 35) progressStepText.textContent = "Paso 1: Identidad y Torneo";
         else if (percentage < 65) progressStepText.textContent = "Paso 2: Calificación y Logística";
         else if (percentage < 90) progressStepText.textContent = "Paso 3: Recomendación";
         else if (percentage < 100) progressStepText.textContent = "Paso 4: Escribe tus Comentarios";
@@ -296,6 +305,14 @@ if (form) {
         // Validaciones obligatorias
         let hasErrors = false;
         let firstErrorElement = null;
+
+        // Validar GamerTag
+        const tag = inpGamertag ? inpGamertag.value.trim() : "";
+        if (!tag) {
+            showError("err-gamertag", "Por favor ingresa tu GamerTag o nombre.");
+            if (!firstErrorElement) firstErrorElement = inpGamertag;
+            hasErrors = true;
+        }
 
         // Validar Torneo
         const game = inpSelectedGame ? inpSelectedGame.value.trim() : "";
