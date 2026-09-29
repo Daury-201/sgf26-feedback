@@ -109,14 +109,23 @@ window.selectNps = function(btn, val) {
 // INICIALIZACIÓN A PRUEBA DE FALLOS
 // =========================================================================
 function initAll() {
+    checkExistingSubmission();
     initUrlParams();
     initGameSelector();
     initStarRating();
     initSegmentedRatings();
     initNpsBar();
     initInputListeners();
-    initActionButtons();
     updateProgress();
+}
+
+function checkExistingSubmission() {
+    const isSubmitted = localStorage.getItem("sgf26_user_feedback_submitted") === "true";
+    if (isSubmitted) {
+        const savedTag = localStorage.getItem("sgf26_submitted_gamertag") || "Competidor";
+        const savedGame = localStorage.getItem("sgf26_submitted_game") || "";
+        showSuccessView({ gamertag: savedTag, tournament: savedGame }, false);
+    }
 }
 
 if (document.readyState === "loading") {
@@ -325,63 +334,73 @@ function initInputListeners() {
     }
     if (inpLikedMost) {
         inpLikedMost.addEventListener("input", () => {
-            clearError("err-comments");
+            clearError("err-liked");
             updateProgress();
         });
     }
     if (inpSuggestions) {
         inpSuggestions.addEventListener("input", () => {
-            clearError("err-comments");
+            clearError("err-suggestions");
             updateProgress();
         });
     }
 }
 
 function updateProgress() {
-    // Calculamos el avance basado en hitos reales y simplificados:
     let score = 0;
-    const maxScore = 6; // 6 pasos clave
+    const maxScore = 7; // Exactamente 7 pasos obligatorios
 
-    // 0. GamerTag completado
+    // 1. GamerTag completado (Paso 1)
     if (inpGamertag && inpGamertag.value.trim().length >= 2) score += 1;
 
-    // 1. Torneo seleccionado (Paso 1)
+    // 2. Torneo seleccionado (Paso 1)
     if (inpSelectedGame && inpSelectedGame.value.trim().length > 0) score += 1;
 
-    // 2. Rating General de estrellas (Paso 2)
+    // 3. Rating General de estrellas (Paso 2)
     if (selectedStarValue > 0) score += 1;
 
-    // 3. Métricas de logística (al menos 2 de las 4 evaluadas) (Paso 3)
+    // 4. Métricas de logística (las 4 evaluadas) (Paso 3)
     const metricsFilled = [
         document.getElementById("inp-metric-punctuality")?.value,
         document.getElementById("inp-metric-hardware")?.value,
         document.getElementById("inp-metric-staff")?.value,
         document.getElementById("inp-metric-atmosphere")?.value
     ].filter(Boolean).length;
+    if (metricsFilled >= 4) score += 1;
 
-    if (metricsFilled >= 2) score += 1;
-
-    // 4. NPS (0-10) (Paso 4)
+    // 5. NPS (0-10) (Paso 4)
     if (inpNps && inpNps.value !== "") score += 1;
 
-    // 5. Comentarios obligatorios escritos (Paso 5)
-    const hasTextFeedback = ((inpLikedMost && inpLikedMost.value.trim().length >= 3) || (inpSuggestions && inpSuggestions.value.trim().length >= 3));
-    if (hasTextFeedback) score += 1;
+    // 6. Pregunta 1 obligatoria: Qué más gustó (Paso 5)
+    if (inpLikedMost && inpLikedMost.value.trim().length >= 2) score += 1;
+
+    // 7. Pregunta 2 obligatoria: Mejoras o 2027 (Paso 5)
+    if (inpSuggestions && inpSuggestions.value.trim().length >= 2) score += 1;
 
     const percentage = Math.min(100, Math.round((score / maxScore) * 100));
 
-    // Actualizar barra de progreso
-    if (progressFill) progressFill.style.width = `${percentage}%`;
+    // Actualizar barra de progreso con relleno completo al 100%
+    if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+        if (percentage === 100) {
+            progressFill.style.background = "linear-gradient(90deg, #10b981, #06b6d4, #a855f7)";
+            progressFill.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.85)";
+        } else {
+            progressFill.style.background = "linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4)";
+            progressFill.style.boxShadow = "0 0 10px rgba(168, 85, 247, 0.8)";
+        }
+    }
     if (progressPercentText) progressPercentText.textContent = `${percentage}%`;
 
     // Mensaje de etapa dinámico
     if (progressStepText) {
         if (percentage === 0) progressStepText.textContent = "Comienza la encuesta";
-        else if (percentage < 35) progressStepText.textContent = "Paso 1: Identidad y Torneo";
-        else if (percentage < 65) progressStepText.textContent = "Paso 2: Calificación y Logística";
-        else if (percentage < 90) progressStepText.textContent = "Paso 3: Recomendación";
-        else if (percentage < 100) progressStepText.textContent = "Paso 4: Escribe tus Comentarios";
-        else progressStepText.textContent = "¡Casi listo para enviar!";
+        else if (percentage < 30) progressStepText.textContent = "Paso 1: Identidad y Torneo";
+        else if (percentage < 50) progressStepText.textContent = "Paso 2: Calificación General";
+        else if (percentage < 70) progressStepText.textContent = "Paso 3: Métricas y Logística";
+        else if (percentage < 85) progressStepText.textContent = "Paso 4: Recomendación (NPS)";
+        else if (percentage < 100) progressStepText.textContent = "Paso 5: Completa ambas preguntas";
+        else progressStepText.textContent = "¡100% Completado! Listo para enviar";
     }
 }
 
@@ -419,12 +438,19 @@ if (form) {
             hasErrors = true;
         }
 
-        // Validar Comentarios y Futuro del Festival (Obligatorio)
+        // Validar Pregunta 1: Qué más gustó (Obligatoria)
         const liked = inpLikedMost ? inpLikedMost.value.trim() : "";
+        if (!liked || liked.length < 2) {
+            showError("err-liked", "Por favor cuéntanos qué fue lo que más te gustó de esta edición.");
+            if (!firstErrorElement) firstErrorElement = inpLikedMost;
+            hasErrors = true;
+        }
+
+        // Validar Pregunta 2: Sugerencias o mejoras 2027 (Obligatoria)
         const suggestions = inpSuggestions ? inpSuggestions.value.trim() : "";
-        if (!liked && !suggestions) {
-            showError("err-comments", "Por favor déjanos tus comentarios o sugerencias antes de enviar.");
-            if (!firstErrorElement) firstErrorElement = inpSuggestions || inpLikedMost;
+        if (!suggestions || suggestions.length < 2) {
+            showError("err-suggestions", "Por favor déjanos tus sugerencias o mejoras para 2027.");
+            if (!firstErrorElement) firstErrorElement = inpSuggestions;
             hasErrors = true;
         }
 
@@ -467,7 +493,12 @@ if (form) {
             // 1. Guardar localmente siempre (garantiza respaldo inmediato)
             saveSubmissionLocally(payload);
 
-            // 2. Enviar a Google Sheets Webhook si está configurado
+            // 2. Bloquear repetición de encuesta en este equipo/navegador
+            localStorage.setItem("sgf26_user_feedback_submitted", "true");
+            localStorage.setItem("sgf26_submitted_gamertag", finalTag);
+            localStorage.setItem("sgf26_submitted_game", game);
+
+            // 3. Enviar a Google Sheets Webhook si está configurado
             if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.trim().length > 10) {
                 try {
                     await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
@@ -483,18 +514,18 @@ if (form) {
                 }
             }
 
-            // 3. Breve transición suave
+            // 4. Breve transición suave
             await new Promise(resolve => setTimeout(resolve, 600));
 
-            // 4. Mostrar pantalla de éxito con celebración
-            showSuccessView(payload);
+            // 5. Mostrar pantalla de éxito con celebración
+            showSuccessView(payload, true);
             triggerCelebrationConfetti();
             showToast("🎉 ¡Tus respuestas fueron registradas exitosamente!", "success");
 
         } catch (err) {
             console.error("Error en envío:", err);
             showToast("Hubo un detalle al enviar, pero tus datos se respaldaron en el navegador.", "warning");
-            showSuccessView(payload);
+            showSuccessView(payload, true);
         } finally {
             setSubmittingState(false);
         }
@@ -517,66 +548,33 @@ function setSubmittingState(isSubmitting) {
 }
 
 // =========================================================================
-// 8. PANTALLA DE ÉXITO Y TICKET DIGITAL
+// 8. PANTALLA DE ÉXITO Y REGISTRO ÚNICO CONFIRMADO
 // =========================================================================
-function showSuccessView(data) {
+function showSuccessView(data, scroll = true) {
     if (form) form.style.display = "none";
     const heroCard = document.querySelector(".survey-hero-card");
     if (heroCard) heroCard.style.display = "none";
 
     if (successView) {
         successView.style.display = "block";
-        successView.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (scroll) {
+            successView.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }
 
-    // Datos dinámicos en el ticket
     const tagDisplay = document.getElementById("success-gamertag-display");
-    const ticketIdDisplay = document.getElementById("success-ticket-id");
-    const gameDisplay = document.getElementById("success-game-display");
-    const dateDisplay = document.getElementById("success-date-display");
-
-    if (tagDisplay) tagDisplay.textContent = data.gamertag;
-    if (ticketIdDisplay) ticketIdDisplay.textContent = data.id;
-    if (gameDisplay) gameDisplay.textContent = data.tournament;
-    if (dateDisplay) {
-        dateDisplay.textContent = new Date().toLocaleDateString('es-DO', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+    if (tagDisplay && data && data.gamertag) {
+        tagDisplay.textContent = data.gamertag;
     }
 
-    // Actualizar progreso a 100%
-    if (progressFill) progressFill.style.width = "100%";
+    // Actualizar progreso a 100% definitivo
+    if (progressFill) {
+        progressFill.style.width = "100%";
+        progressFill.style.background = "linear-gradient(90deg, #10b981, #06b6d4, #a855f7)";
+        progressFill.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.85)";
+    }
     if (progressPercentText) progressPercentText.textContent = "100%";
-    if (progressStepText) progressStepText.textContent = "Encuesta Completada";
-}
-
-function initActionButtons() {
-    // Copiar Ticket al portapapeles
-    const btnCopyTicket = document.getElementById("btn-copy-ticket");
-    if (btnCopyTicket) {
-        btnCopyTicket.addEventListener("click", () => {
-            const ticketCode = document.getElementById("success-ticket-id")?.textContent || "";
-            if (navigator.clipboard && ticketCode) {
-                navigator.clipboard.writeText(ticketCode).then(() => {
-                    showToast(`Código copiado: ${ticketCode}`, "info");
-                }).catch(() => {
-                    fallbackCopy(ticketCode);
-                });
-            } else {
-                fallbackCopy(ticketCode);
-            }
-        });
-    }
-
-    // Botón Enviar Otra Respuesta
-    const btnNewResponse = document.getElementById("btn-new-response");
-    if (btnNewResponse) {
-        btnNewResponse.addEventListener("click", () => {
-            resetSurvey();
-        });
-    }
+    if (progressStepText) progressStepText.textContent = "Encuesta Confirmada";
 }
 
 function resetSurvey() {

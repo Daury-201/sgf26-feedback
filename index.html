@@ -20,7 +20,7 @@
     <!-- Canvas Confetti para celebración de envío -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=5.1">
+    <link rel="stylesheet" href="style.css?v=6.0">
     <script>
         window.selectedStarValue = 0;
 
@@ -517,17 +517,18 @@
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="inp-liked-most">
-                        <i class="fa-solid fa-heart" style="color: #ec4899;"></i> ¿Qué fue lo que MÁS te gustó de esta edición?
+                        <i class="fa-solid fa-heart" style="color: #ec4899;"></i> ¿Qué fue lo que MÁS te gustó de esta edición? <span class="req">*</span>
                     </label>
-                    <textarea id="inp-liked-most" name="likedMost" rows="3" placeholder="Ej: Las finales en pantalla gigante, el ambiente competitivo, el casteo de Mario Kart, etc."></textarea>
+                    <textarea id="inp-liked-most" name="likedMost" rows="3" placeholder="Ej: Las finales en pantalla gigante, el ambiente competitivo, el casteo de Mario Kart, etc." required></textarea>
+                    <span class="field-error-msg" id="err-liked">Por favor cuéntanos qué fue lo que más te gustó de esta edición.</span>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="inp-suggestions">
                         <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> ¿Qué cosas puntuales debemos MEJORAR o qué nuevo juego quisieras ver en 2027? <span class="req">*</span>
                     </label>
-                    <textarea id="inp-suggestions" name="suggestions" rows="3" placeholder="Ej: Agregar Tekken 8 o Valorant, mejorar los tiempos de espera entre rondas, etc."></textarea>
-                    <span class="field-error-msg" id="err-comments">Por favor escribe tus comentarios o sugerencias antes de enviar.</span>
+                    <textarea id="inp-suggestions" name="suggestions" rows="3" placeholder="Ej: Agregar Tekken 8 o Valorant, mejorar los tiempos de espera entre rondas, etc." required></textarea>
+                    <span class="field-error-msg" id="err-suggestions">Por favor déjanos tus sugerencias o mejoras para 2027.</span>
                 </div>
             </section>
 
@@ -545,34 +546,19 @@
 
         <!-- Pantalla de Éxito / Victory Screen (Oculta hasta el envío) -->
         <section class="survey-success-card" id="success-view" style="display: none;">
-            <div class="success-trophy-badge">🏆</div>
+            <div class="success-trophy-badge"><i class="fa-solid fa-circle-check"></i></div>
             <div class="success-meta-tag">FEEDBACK CONFIRMADO</div>
             <h2 class="success-title">¡Misión Cumplida, <span id="success-gamertag-display">Gamer</span>!</h2>
             <p class="success-desc">
                 Tus respuestas han sido recibidas y registradas oficialmente en el sistema del <strong>Students Gaming Festival 2026</strong>. Gracias por ayudarnos a que la próxima edición sea aún más legendaria.
             </p>
 
-            <div class="success-ticket-box">
-                <div class="ticket-header">
-                    <span>TICKET OFICIAL DE FEEDBACK</span>
-                    <span class="ticket-status">VERIFICADO ✓</span>
+            <div class="success-notice-box">
+                <div class="notice-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="notice-text">
+                    <strong>Registro Único Guardado</strong>
+                    <p>Tu evaluación ha quedado registrada exitosamente. Para garantizar la objetividad y fidelidad de los datos del festival, no se admiten envíos repetidos.</p>
                 </div>
-                <div class="ticket-body">
-                    <div class="ticket-code" id="success-ticket-id">#SGF26-FB-8942</div>
-                    <div class="ticket-details">
-                        <div><span>Torneo:</span> <strong id="success-game-display">Oficial</strong></div>
-                        <div><span>Fecha:</span> <strong id="success-date-display">Septiembre 2026</strong></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="success-actions-row">
-                <button type="button" class="btn-action-secondary" id="btn-copy-ticket">
-                    <i class="fa-solid fa-copy"></i> Copiar Código de Ticket
-                </button>
-                <button type="button" class="btn-action-primary" id="btn-new-response">
-                    <i class="fa-solid fa-rotate-left"></i> Enviar Otra Respuesta
-                </button>
             </div>
         </section>
 
@@ -589,6 +575,6 @@
     <!-- Toast Notification Container -->
     <div id="survey-toast" class="survey-toast"></div>
 
-    <script src="app.js?v=5.1"></script>
+    <script src="app.js?v=6.0"></script>
 </body>
 </html>
