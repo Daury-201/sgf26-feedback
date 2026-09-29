@@ -437,7 +437,7 @@ if (form) {
         }
 
         // Obtener identidad (cargada por URL param si se envió por correo, o predeterminada)
-        const tag = (inpGamertag && inpGamertag.value.trim()) ? inpGamertag.value.trim() : "Competidor SGF";
+        const finalTag = tag || "Competidor SGF";
         const email = (inpEmail && inpEmail.value.trim()) ? inpEmail.value.trim() : "";
 
         // Preparar Payload oficial
@@ -446,7 +446,7 @@ if (form) {
             id: ticketId,
             timestamp: new Date().toISOString(),
             dateFormatted: new Intl.DateTimeFormat('es-DO', { dateStyle: 'full', timeStyle: 'short' }).format(new Date()),
-            gamertag: tag,
+            gamertag: finalTag,
             email: email,
             tournament: game,
             overallRating: selectedStarValue,
