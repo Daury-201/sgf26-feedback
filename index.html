@@ -20,7 +20,7 @@
     <!-- Canvas Confetti para celebración de envío -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3.5">
 </head>
 <body>
 
@@ -104,7 +104,7 @@
                         Torneo en el que participaste <span class="req">*</span>
                     </label>
                     <div class="game-select-grid" id="game-select-grid">
-                        <div class="game-card-option" data-game-key="smash" data-game-name="Super Smash Bros. Ultimate">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="smash" data-game-name="Super Smash Bros. Ultimate">
                             <div class="game-thumb">
                                 <img src="images/smash.png" alt="Super Smash Bros. Ultimate">
                             </div>
@@ -114,7 +114,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="mk8" data-game-name="Mario Kart 8 Deluxe">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="mk8" data-game-name="Mario Kart 8 Deluxe">
                             <div class="game-thumb">
                                 <img src="images/mario-kart.jpg" alt="Mario Kart 8 Deluxe">
                             </div>
@@ -124,7 +124,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="sf6" data-game-name="Street Fighter 6">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="sf6" data-game-name="Street Fighter 6">
                             <div class="game-thumb">
                                 <img src="images/sf6.jpg" alt="Street Fighter 6">
                             </div>
@@ -134,7 +134,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="nba" data-game-name="NBA 2K26">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="nba" data-game-name="NBA 2K26">
                             <div class="game-thumb">
                                 <img src="images/nba2k26.png" alt="NBA 2K26">
                             </div>
@@ -144,7 +144,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="fc26" data-game-name="EA Sports FC 26">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="fc26" data-game-name="EA Sports FC 26">
                             <div class="game-thumb">
                                 <img src="images/fc26.png" alt="EA Sports FC 26">
                             </div>
@@ -154,7 +154,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="pokemon" data-game-name="Pokémon Champions">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="pokemon" data-game-name="Pokémon Champions">
                             <div class="game-thumb">
                                 <img src="images/pokemon.jpg" alt="Pokémon Champions">
                             </div>
@@ -164,7 +164,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="clash" data-game-name="Clash Royale">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="clash" data-game-name="Clash Royale">
                             <div class="game-thumb">
                                 <img src="images/clash-royale.png" alt="Clash Royale">
                             </div>
@@ -174,7 +174,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="brawl" data-game-name="Brawlhalla">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="brawl" data-game-name="Brawlhalla">
                             <div class="game-thumb">
                                 <img src="images/brawlhalla.jpg" alt="Brawlhalla">
                             </div>
@@ -184,7 +184,7 @@
                             <div class="radio-indicator"></div>
                         </div>
 
-                        <div class="game-card-option" data-game-key="espectador" data-game-name="Espectador / Asistente">
+                        <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="espectador" data-game-name="Espectador / Asistente">
                             <div class="game-thumb spectator-thumb">
                                 <img src="images/logo.png" alt="SGF 2026 Espectador">
                             </div>
@@ -217,20 +217,20 @@
                     </label>
 
                     <div class="neon-stars-row">
-                        <div class="neon-stars-wrapper" id="stars-overall">
-                            <button type="button" class="star-btn" data-value="1" title="1 estrella">
+                        <div class="neon-stars-wrapper" id="stars-overall" onmouseleave="leaveStar()">
+                            <button type="button" class="star-btn" onclick="selectStar(1)" onmouseenter="hoverStar(1)" data-value="1" title="1 estrella">
                                 <i class="fa-solid fa-star"></i>
                             </button>
-                            <button type="button" class="star-btn" data-value="2" title="2 estrellas">
+                            <button type="button" class="star-btn" onclick="selectStar(2)" onmouseenter="hoverStar(2)" data-value="2" title="2 estrellas">
                                 <i class="fa-solid fa-star"></i>
                             </button>
-                            <button type="button" class="star-btn" data-value="3" title="3 estrellas">
+                            <button type="button" class="star-btn" onclick="selectStar(3)" onmouseenter="hoverStar(3)" data-value="3" title="3 estrellas">
                                 <i class="fa-solid fa-star"></i>
                             </button>
-                            <button type="button" class="star-btn" data-value="4" title="4 estrellas">
+                            <button type="button" class="star-btn" onclick="selectStar(4)" onmouseenter="hoverStar(4)" data-value="4" title="4 estrellas">
                                 <i class="fa-solid fa-star"></i>
                             </button>
-                            <button type="button" class="star-btn" data-value="5" title="5 estrellas">
+                            <button type="button" class="star-btn" onclick="selectStar(5)" onmouseenter="hoverStar(5)" data-value="5" title="5 estrellas">
                                 <i class="fa-solid fa-star"></i>
                             </button>
                         </div>
@@ -270,11 +270,11 @@
                             </div>
                         </div>
                         <div class="segmented-rating" data-name="punctuality">
-                            <button type="button" data-val="1">1</button>
-                            <button type="button" data-val="2">2</button>
-                            <button type="button" data-val="3">3</button>
-                            <button type="button" data-val="4">4</button>
-                            <button type="button" data-val="5">5</button>
+                            <button type="button" onclick="selectMetric(this, 'punctuality', 1)" data-val="1">1</button>
+                            <button type="button" onclick="selectMetric(this, 'punctuality', 2)" data-val="2">2</button>
+                            <button type="button" onclick="selectMetric(this, 'punctuality', 3)" data-val="3">3</button>
+                            <button type="button" onclick="selectMetric(this, 'punctuality', 4)" data-val="4">4</button>
+                            <button type="button" onclick="selectMetric(this, 'punctuality', 5)" data-val="5">5</button>
                         </div>
                         <div class="metric-scale-labels">
                             <span>Deficiente</span>
@@ -293,11 +293,11 @@
                             </div>
                         </div>
                         <div class="segmented-rating" data-name="hardware">
-                            <button type="button" data-val="1">1</button>
-                            <button type="button" data-val="2">2</button>
-                            <button type="button" data-val="3">3</button>
-                            <button type="button" data-val="4">4</button>
-                            <button type="button" data-val="5">5</button>
+                            <button type="button" onclick="selectMetric(this, 'hardware', 1)" data-val="1">1</button>
+                            <button type="button" onclick="selectMetric(this, 'hardware', 2)" data-val="2">2</button>
+                            <button type="button" onclick="selectMetric(this, 'hardware', 3)" data-val="3">3</button>
+                            <button type="button" onclick="selectMetric(this, 'hardware', 4)" data-val="4">4</button>
+                            <button type="button" onclick="selectMetric(this, 'hardware', 5)" data-val="5">5</button>
                         </div>
                         <div class="metric-scale-labels">
                             <span>Deficiente</span>
@@ -316,11 +316,11 @@
                             </div>
                         </div>
                         <div class="segmented-rating" data-name="staff">
-                            <button type="button" data-val="1">1</button>
-                            <button type="button" data-val="2">2</button>
-                            <button type="button" data-val="3">3</button>
-                            <button type="button" data-val="4">4</button>
-                            <button type="button" data-val="5">5</button>
+                            <button type="button" onclick="selectMetric(this, 'staff', 1)" data-val="1">1</button>
+                            <button type="button" onclick="selectMetric(this, 'staff', 2)" data-val="2">2</button>
+                            <button type="button" onclick="selectMetric(this, 'staff', 3)" data-val="3">3</button>
+                            <button type="button" onclick="selectMetric(this, 'staff', 4)" data-val="4">4</button>
+                            <button type="button" onclick="selectMetric(this, 'staff', 5)" data-val="5">5</button>
                         </div>
                         <div class="metric-scale-labels">
                             <span>Deficiente</span>
@@ -339,11 +339,11 @@
                             </div>
                         </div>
                         <div class="segmented-rating" data-name="atmosphere">
-                            <button type="button" data-val="1">1</button>
-                            <button type="button" data-val="2">2</button>
-                            <button type="button" data-val="3">3</button>
-                            <button type="button" data-val="4">4</button>
-                            <button type="button" data-val="5">5</button>
+                            <button type="button" onclick="selectMetric(this, 'atmosphere', 1)" data-val="1">1</button>
+                            <button type="button" onclick="selectMetric(this, 'atmosphere', 2)" data-val="2">2</button>
+                            <button type="button" onclick="selectMetric(this, 'atmosphere', 3)" data-val="3">3</button>
+                            <button type="button" onclick="selectMetric(this, 'atmosphere', 4)" data-val="4">4</button>
+                            <button type="button" onclick="selectMetric(this, 'atmosphere', 5)" data-val="5">5</button>
                         </div>
                         <div class="metric-scale-labels">
                             <span>Deficiente</span>
@@ -369,17 +369,17 @@
                 <div class="nps-card">
                     <p class="nps-prompt">En una escala del <strong>0 al 10</strong>, ¿volverías o recomendarías el evento a tus compañeros?</p>
                     <div class="nps-segmented-bar" id="nps-bar">
-                        <button type="button" data-nps="0">0</button>
-                        <button type="button" data-nps="1">1</button>
-                        <button type="button" data-nps="2">2</button>
-                        <button type="button" data-nps="3">3</button>
-                        <button type="button" data-nps="4">4</button>
-                        <button type="button" data-nps="5">5</button>
-                        <button type="button" data-nps="6">6</button>
-                        <button type="button" data-nps="7">7</button>
-                        <button type="button" data-nps="8">8</button>
-                        <button type="button" data-nps="9">9</button>
-                        <button type="button" data-nps="10">10</button>
+                        <button type="button" onclick="selectNps(this, 0)" data-nps="0">0</button>
+                        <button type="button" onclick="selectNps(this, 1)" data-nps="1">1</button>
+                        <button type="button" onclick="selectNps(this, 2)" data-nps="2">2</button>
+                        <button type="button" onclick="selectNps(this, 3)" data-nps="3">3</button>
+                        <button type="button" onclick="selectNps(this, 4)" data-nps="4">4</button>
+                        <button type="button" onclick="selectNps(this, 5)" data-nps="5">5</button>
+                        <button type="button" onclick="selectNps(this, 6)" data-nps="6">6</button>
+                        <button type="button" onclick="selectNps(this, 7)" data-nps="7">7</button>
+                        <button type="button" onclick="selectNps(this, 8)" data-nps="8">8</button>
+                        <button type="button" onclick="selectNps(this, 9)" data-nps="9">9</button>
+                        <button type="button" onclick="selectNps(this, 10)" data-nps="10">10</button>
                     </div>
                     <div class="nps-legend">
                         <span class="nps-detractor"><i class="fa-solid fa-thumbs-down"></i> Poco probable (0 - 6)</span>
@@ -476,6 +476,6 @@
     <!-- Toast Notification Container -->
     <div id="survey-toast" class="survey-toast"></div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=3.5"></script>
 </body>
 </html>

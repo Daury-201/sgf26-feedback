@@ -52,6 +52,78 @@ let currentHoveredStar = 0;
 let selectedStarValue = 0;
 
 // =========================================================================
+// FUNCIONES GLOBALES DE INTERACCIÓN DIRECTA (INLINE ONCLICK HANDLERS)
+// =========================================================================
+window.selectGameCard = function(el) {
+    document.querySelectorAll(".game-card-option").forEach(c => c.classList.remove("selected"));
+    el.classList.add("selected");
+    const gameName = el.getAttribute("data-game-name") || "";
+    const inp = document.getElementById("inp-selected-game");
+    if (inp) inp.value = gameName;
+    clearError("err-game");
+    updateProgress();
+};
+
+window.selectStar = function(val) {
+    selectedStarValue = parseInt(val, 10);
+    const inp = document.getElementById("inp-overall-rating");
+    if (inp) inp.value = selectedStarValue;
+    renderStars(selectedStarValue, true);
+    clearError("err-overall");
+    const badge = document.getElementById("rating-feedback-label");
+    if (badge && RATING_TEXTS[selectedStarValue]) {
+        badge.textContent = RATING_TEXTS[selectedStarValue];
+        badge.classList.add("active");
+    }
+    updateProgress();
+};
+
+window.hoverStar = function(val) {
+    renderStars(parseInt(val, 10), false);
+    const badge = document.getElementById("rating-feedback-label");
+    if (badge && RATING_TEXTS[val]) {
+        badge.textContent = RATING_TEXTS[val];
+        badge.classList.add("active");
+    }
+};
+
+window.leaveStar = function() {
+    renderStars(selectedStarValue, false);
+    const badge = document.getElementById("rating-feedback-label");
+    if (badge) {
+        if (selectedStarValue > 0 && RATING_TEXTS[selectedStarValue]) {
+            badge.textContent = RATING_TEXTS[selectedStarValue];
+            badge.classList.add("active");
+        } else {
+            badge.textContent = "Selecciona de 1 a 5 estrellas";
+            badge.classList.remove("active");
+        }
+    }
+};
+
+window.selectMetric = function(btn, metricName, val) {
+    const container = btn.closest(".segmented-rating");
+    if (container) {
+        container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    }
+    btn.classList.add("active");
+    const hiddenInp = document.getElementById(`inp-metric-${metricName}`);
+    if (hiddenInp) hiddenInp.value = val;
+    updateProgress();
+};
+
+window.selectNps = function(btn, val) {
+    const bar = document.getElementById("nps-bar");
+    if (bar) {
+        bar.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    }
+    btn.classList.add("active");
+    const inp = document.getElementById("inp-nps");
+    if (inp) inp.value = val;
+    updateProgress();
+};
+
+// =========================================================================
 // INICIALIZACIÓN A PRUEBA DE FALLOS
 // =========================================================================
 function initAll() {
