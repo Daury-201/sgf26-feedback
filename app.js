@@ -9,7 +9,7 @@
 // =========================================================================
 // CONFIGURACIÓN DE CONEXIÓN (GOOGLE SHEETS WEBHOOK)
 // =========================================================================
-const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbw0r539-6Ev1vKGOgAkHWQLolgvzEZQ8ixnz7ELlFF5roNFxgT-f7mfZHVL3EbgFWMy/exec"; 
+const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby13vJq2zI3ZG0IhzVdeMo3DTjp0szr5YGYtE0tD91_1hGyNUoYJVv8__g6Wny43WNo/exec"; 
 
 const LOCAL_STORAGE_KEY = "sgf26_feedback_submissions_v1";
 
