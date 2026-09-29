@@ -21,6 +21,10 @@ let allResponses = [];
 let filteredResponses = [];
 let currentTab = "liked";
 
+// Paginación de Tabla (5 registros por página)
+const TABLE_PAGE_SIZE = 5;
+let currentTablePage = 1;
+
 // Instancias de Chart.js
 let chartStars = null;
 let chartRadar = null;
@@ -287,7 +291,10 @@ async function loadDashboardData(isBackground = false) {
 // =========================================================================
 // 4. FILTRADO DINÁMICO
 // =========================================================================
-function applyFilters() {
+function applyFilters(resetPage = true) {
+    if (resetPage) {
+        currentTablePage = 1;
+    }
     const tournamentVal = (document.getElementById("filter-tournament")?.value || "ALL").toLowerCase();
     const ratingVal = document.getElementById("filter-rating")?.value || "ALL";
     const searchVal = (document.getElementById("filter-search")?.value || "").toLowerCase().trim();
@@ -801,18 +808,29 @@ function renderQuotes() {
 }
 
 // =========================================================================
-// 8. RENDER DE TABLA DE RESPUESTAS
+// 8. RENDER DE TABLA DE RESPUESTAS (CON PAGINACIÓN DE 5 REGISTROS)
 // =========================================================================
 function renderTable() {
     const tbody = document.getElementById("responses-tbody");
     const countLabel = document.getElementById("table-count-label");
+    const paginationEl = document.getElementById("table-pagination");
+    const paginationInfo = document.getElementById("pagination-info");
+    const paginationNumbers = document.getElementById("pagination-numbers");
+    const btnPrev = document.getElementById("btn-page-prev");
+    const btnNext = document.getElementById("btn-page-next");
     if (!tbody) return;
 
+    const totalRecords = filteredResponses.length;
+    const totalPages = Math.ceil(totalRecords / TABLE_PAGE_SIZE) || 1;
+
+    if (currentTablePage > totalPages) currentTablePage = totalPages;
+    if (currentTablePage < 1) currentTablePage = 1;
+
     if (countLabel) {
-        countLabel.textContent = `Mostrando ${filteredResponses.length} de ${allResponses.length} respuestas registradas`;
+        countLabel.textContent = `${totalRecords} respuestas encontradas (de ${allResponses.length} en Google Sheets)`;
     }
 
-    if (filteredResponses.length === 0) {
+    if (totalRecords === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-dim);">
@@ -821,10 +839,32 @@ function renderTable() {
                 </td>
             </tr>
         `;
+        if (paginationEl) paginationEl.style.display = "none";
         return;
     }
 
-    tbody.innerHTML = filteredResponses.map(r => {
+    if (paginationEl) paginationEl.style.display = "flex";
+
+    const startIdx = (currentTablePage - 1) * TABLE_PAGE_SIZE;
+    const endIdx = Math.min(startIdx + TABLE_PAGE_SIZE, totalRecords);
+    const pageRecords = filteredResponses.slice(startIdx, endIdx);
+
+    if (paginationInfo) {
+        paginationInfo.innerHTML = `Mostrando <strong>${startIdx + 1} - ${endIdx}</strong> de <strong>${totalRecords}</strong> registros (Pág. ${currentTablePage} de ${totalPages})`;
+    }
+
+    if (btnPrev) btnPrev.disabled = currentTablePage <= 1;
+    if (btnNext) btnNext.disabled = currentTablePage >= totalPages;
+
+    if (paginationNumbers) {
+        let pagesHtml = "";
+        for (let p = 1; p <= totalPages; p++) {
+            pagesHtml += `<button type="button" class="page-num-btn ${p === currentTablePage ? 'active' : ''}" onclick="goToTablePage(${p})">${p}</button>`;
+        }
+        paginationNumbers.innerHTML = pagesHtml;
+    }
+
+    tbody.innerHTML = pageRecords.map(r => {
         const stars = parseInt(r.overallRating, 10) || 5;
         const starsHtml = `<span class="star-rating-cell">${stars} <i class="fa-solid fa-star"></i></span>`;
 
@@ -893,6 +933,24 @@ function renderTable() {
         `;
     }).join("");
 }
+
+// Handlers de Paginación
+window.changeTablePage = function(delta) {
+    const totalPages = Math.ceil(filteredResponses.length / TABLE_PAGE_SIZE) || 1;
+    const targetPage = currentTablePage + delta;
+    if (targetPage >= 1 && targetPage <= totalPages) {
+        currentTablePage = targetPage;
+        renderTable();
+    }
+};
+
+window.goToTablePage = function(page) {
+    const totalPages = Math.ceil(filteredResponses.length / TABLE_PAGE_SIZE) || 1;
+    if (page >= 1 && page <= totalPages) {
+        currentTablePage = page;
+        renderTable();
+    }
+};
 
 // =========================================================================
 // 9. EXPORTACIÓN A CSV / EXCEL
