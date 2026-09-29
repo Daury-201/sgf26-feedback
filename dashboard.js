@@ -256,12 +256,8 @@ async function loadDashboardData(isBackground = false) {
     allResponses = combined;
     applyFilters();
 
-    // Actualizar badges e indicadores
-    const statusLabel = document.getElementById("data-status-label");
+    // Actualizar indicador de fuente
     const sourceInd = document.getElementById("source-indicator");
-    if (statusLabel) {
-        statusLabel.textContent = `EN VIVO • ${allResponses.length} RESPUESTAS REALES`;
-    }
     if (sourceInd) {
         sourceInd.innerHTML = `<i class="fa-solid fa-database"></i> ${allResponses.length} Respuestas Oficiales`;
     }
