@@ -202,55 +202,101 @@ function initUrlParams() {
         inpEmail.title = "Correo de participante verificado oficialmente";
     }
 
-    // Torneo / Juego
-    const game = params.get("game") || params.get("torneo");
+    // Torneo / Juego (permite hasta 2 separados por coma)
+    const game = params.get("game") || params.get("torneo") || params.get("games");
     if (game) {
-        const normalizedGame = game.toLowerCase().trim();
+        const gameKeys = game.split(/,\s*|\s*\+\s*/).map(s => s.toLowerCase().trim()).filter(Boolean);
         const cards = document.querySelectorAll(".game-card-option");
-        const targetOption = Array.from(cards).find(opt => {
-            const key = (opt.getAttribute("data-game-key") || "").toLowerCase();
-            return key === normalizedGame || key.includes(normalizedGame) || normalizedGame.includes(key);
+        gameKeys.slice(0, 2).forEach(gk => {
+            const targetOption = Array.from(cards).find(opt => {
+                const key = (opt.getAttribute("data-game-key") || "").toLowerCase();
+                const name = (opt.getAttribute("data-game-name") || "").toLowerCase();
+                return key === gk || key.includes(gk) || gk.includes(key) || name.includes(gk);
+            });
+            if (targetOption) {
+                targetOption.classList.add("selected");
+            }
         });
+        syncSelectedGames();
+    }
+}
 
-        if (targetOption) {
-            selectGameOption(targetOption);
+// =========================================================================
+// 2. SELECTOR DE JUEGOS / TORNEOS (HASTA 2 SELECCIONABLES)
+// =========================================================================
+function initGameSelector() {
+    syncSelectedGames();
+}
+
+function selectGameCard(el) {
+    if (!el) return;
+    const isSpectator = el.getAttribute("data-game-key") === "espectador";
+    const isCurrentlySelected = el.classList.contains("selected");
+
+    if (isSpectator) {
+        if (isCurrentlySelected) {
+            el.classList.remove("selected");
+        } else {
+            document.querySelectorAll(".game-card-option").forEach(c => c.classList.remove("selected"));
+            el.classList.add("selected");
+        }
+    } else {
+        const spectatorCard = document.querySelector('.game-card-option[data-game-key="espectador"]');
+        if (spectatorCard) spectatorCard.classList.remove("selected");
+
+        if (isCurrentlySelected) {
+            el.classList.remove("selected");
+        } else {
+            const currentSelected = document.querySelectorAll(".game-card-option.selected");
+            if (currentSelected.length >= 2) {
+                if (typeof showToast === "function") {
+                    showToast("⚠️ El festival permitía un máximo de 2 torneos por participante. Deselecciona uno para cambiarlo.", "warning");
+                }
+                const badgeEl = document.getElementById("game-selection-badge");
+                if (badgeEl) {
+                    badgeEl.style.animation = "shake 0.4s ease";
+                    setTimeout(() => { badgeEl.style.animation = ""; }, 400);
+                }
+                return;
+            }
+            el.classList.add("selected");
+        }
+    }
+
+    syncSelectedGames();
+    clearError("err-game");
+    updateProgress();
+}
+window.selectGameCard = selectGameCard;
+window.selectGameOption = selectGameCard;
+
+function syncSelectedGames() {
+    const selected = Array.from(document.querySelectorAll(".game-card-option.selected")).map(c => {
+        return c.getAttribute("data-game-name") || "";
+    }).filter(Boolean);
+
+    const inp = document.getElementById("inp-selected-game");
+    if (inp) inp.value = selected.join(", ");
+
+    const badge = document.getElementById("game-selection-badge");
+    if (badge) {
+        const count = selected.length;
+        if (count === 0) {
+            badge.innerHTML = '<i class="fa-solid fa-gamepad"></i> Selecciona 1 o 2 juegos';
+            badge.style.borderColor = "rgba(168, 85, 247, 0.4)";
+            badge.style.color = "#c084fc";
+        } else if (count === 1) {
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 1 seleccionado (puedes elegir otro)';
+            badge.style.borderColor = "rgba(6, 182, 212, 0.6)";
+            badge.style.color = "#67e8f9";
+        } else {
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 2 de 2 seleccionados (Máximo)';
+            badge.style.borderColor = "rgba(16, 185, 129, 0.8)";
+            badge.style.color = "#34d399";
         }
     }
 }
-
-// =========================================================================
-// 2. SELECTOR DE JUEGOS / TORNEOS (DELEGACIÓN + LISTENER DIRECTO)
-// =========================================================================
-function initGameSelector() {
-    const grid = document.getElementById("game-select-grid");
-    if (grid) {
-        grid.addEventListener("click", (e) => {
-            const card = e.target.closest(".game-card-option");
-            if (!card) return;
-            selectGameOption(card);
-            clearError("err-game");
-            updateProgress();
-        });
-    }
-
-    const cards = document.querySelectorAll(".game-card-option");
-    cards.forEach(card => {
-        card.addEventListener("click", () => {
-            selectGameOption(card);
-            clearError("err-game");
-            updateProgress();
-        });
-    });
-}
-
-function selectGameOption(targetCard) {
-    const cards = document.querySelectorAll(".game-card-option");
-    cards.forEach(c => c.classList.remove("selected"));
-    targetCard.classList.add("selected");
-    const gameName = targetCard.getAttribute("data-game-name") || "";
-    const inp = document.getElementById("inp-selected-game");
-    if (inp) inp.value = gameName;
-}
+window.syncSelectedGames = syncSelectedGames;
 
 // =========================================================================
 // 3. ESTRELLAS NEÓN DE CALIFICACIÓN GENERAL (ESTABLE SIN JITTER)
@@ -661,6 +707,7 @@ function resetSurvey() {
     ratingBadge.classList.remove("active");
 
     gameCardOptions.forEach(c => c.classList.remove("selected"));
+    syncSelectedGames();
     segmentedButtons.forEach(b => b.classList.remove("active"));
     npsButtons.forEach(b => b.classList.remove("active"));
 

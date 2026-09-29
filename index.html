@@ -79,15 +79,69 @@
         };
 
         window.selectGameCard = function(el) {
-            document.querySelectorAll('.game-card-option').forEach(function(c) {
-                c.classList.remove('selected');
-            });
-            el.classList.add('selected');
-            var gameName = el.getAttribute('data-game-name') || '';
+            if (!el) return;
+            var isSpectator = el.getAttribute('data-game-key') === 'espectador';
+            var isCurrentlySelected = el.classList.contains('selected');
+
+            if (isSpectator) {
+                if (isCurrentlySelected) {
+                    el.classList.remove('selected');
+                } else {
+                    document.querySelectorAll('.game-card-option').forEach(function(c) {
+                        c.classList.remove('selected');
+                    });
+                    el.classList.add('selected');
+                }
+            } else {
+                var spectatorCard = document.querySelector('.game-card-option[data-game-key="espectador"]');
+                if (spectatorCard) spectatorCard.classList.remove('selected');
+
+                if (isCurrentlySelected) {
+                    el.classList.remove('selected');
+                } else {
+                    var currentSelected = document.querySelectorAll('.game-card-option.selected');
+                    if (currentSelected.length >= 2) {
+                        if (typeof showToast === 'function') {
+                            showToast("⚠️ El festival permitía un máximo de 2 torneos por participante. Deselecciona uno para cambiarlo.", "warning");
+                        }
+                        var badgeEl = document.getElementById('game-selection-badge');
+                        if (badgeEl) {
+                            badgeEl.style.animation = 'shake 0.4s ease';
+                            setTimeout(function() { badgeEl.style.animation = ''; }, 400);
+                        }
+                        return;
+                    }
+                    el.classList.add('selected');
+                }
+            }
+
+            var selected = Array.from(document.querySelectorAll('.game-card-option.selected')).map(function(c) {
+                return c.getAttribute('data-game-name') || '';
+            }).filter(Boolean);
+
             var inp = document.getElementById('inp-selected-game');
-            if (inp) inp.value = gameName;
+            if (inp) inp.value = selected.join(', ');
+
+            var badge = document.getElementById('game-selection-badge');
+            if (badge) {
+                var count = selected.length;
+                if (count === 0) {
+                    badge.innerHTML = '<i class="fa-solid fa-gamepad"></i> Selecciona 1 o 2 juegos';
+                    badge.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+                    badge.style.color = '#c084fc';
+                } else if (count === 1) {
+                    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 1 seleccionado (puedes elegir otro)';
+                    badge.style.borderColor = 'rgba(6, 182, 212, 0.6)';
+                    badge.style.color = '#67e8f9';
+                } else {
+                    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 2 de 2 seleccionados (Máximo)';
+                    badge.style.borderColor = 'rgba(16, 185, 129, 0.8)';
+                    badge.style.color = '#34d399';
+                }
+            }
+
             var err = document.getElementById('err-game');
-            if (err) err.classList.remove('visible');
+            if (err && selected.length > 0) err.classList.remove('visible');
             if (typeof updateProgress === 'function') updateProgress();
         };
 
@@ -190,14 +244,14 @@
             <input type="hidden" id="inp-email" name="email" value="">
 
             <!-- =========================================================
-                 PASO 1: IDENTIDAD Y TORNEO EN EL FESTIVAL
+                 PASO 1: IDENTIDAD Y TORNEOS EN EL FESTIVAL
                  ========================================================= -->
             <section class="survey-section" id="section-identity">
                 <div class="section-header">
                     <span class="section-number">01</span>
                     <div class="section-header-text">
-                        <h3>Identidad y Torneo</h3>
-                        <p>Ingresa tu GamerTag y selecciona el juego en el que competiste.</p>
+                        <h3>Identidad y Torneos</h3>
+                        <p>Ingresa tu GamerTag y selecciona hasta 2 juegos en los que competiste (el festival permitía hasta 2 inscripciones).</p>
                     </div>
                 </div>
 
@@ -213,9 +267,14 @@
 
                 <!-- Selector de Torneo Interactivo con Imágenes Oficiales -->
                 <div class="form-group">
-                    <label style="display: block; font-weight: 700; color: #f1f5f9; margin-bottom: 10px;">
-                        Torneo en el que participaste <span class="req">*</span>
-                    </label>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <label style="margin-bottom: 0; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 6px;">
+                            Torneo(s) en los que participaste <span class="req">*</span>
+                        </label>
+                        <span id="game-selection-badge" class="game-count-badge" style="font-size: 0.76rem; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); padding: 4px 12px; border-radius: 999px; color: #c084fc; font-weight: 600; transition: all 0.25s ease;">
+                            <i class="fa-solid fa-gamepad"></i> Selecciona 1 o 2 juegos
+                        </span>
+                    </div>
                     <div class="game-select-grid" id="game-select-grid">
                         <div class="game-card-option" onclick="selectGameCard(this)" data-game-key="smash" data-game-name="Super Smash Bros. Ultimate">
                             <div class="game-thumb">

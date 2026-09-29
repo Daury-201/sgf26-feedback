@@ -252,11 +252,15 @@ function applyFilters() {
         if (tournamentVal !== "all") {
             const t = (item.tournament || "").toLowerCase();
             if (tournamentVal === "smash" && !t.includes("smash")) return false;
-            if (tournamentVal === "fc26" && !t.includes("fc")) return false;
-            if (tournamentVal === "mariokart" && !t.includes("mario")) return false;
+            if ((tournamentVal === "fc26" || tournamentVal === "fc") && !t.includes("fc")) return false;
+            if ((tournamentVal === "mariokart" || tournamentVal === "mk8") && !t.includes("mario")) return false;
             if (tournamentVal === "streetfighter" && !t.includes("street")) return false;
+            if (tournamentVal === "nba" && !t.includes("nba")) return false;
+            if (tournamentVal === "pokemon" && !t.includes("pokemon") && !t.includes("pokémon")) return false;
+            if (tournamentVal === "clash" && !t.includes("clash")) return false;
+            if (tournamentVal === "brawl" && !t.includes("brawl")) return false;
             if (tournamentVal === "valorant" && !t.includes("valorant")) return false;
-            if (tournamentVal === "freeplay" && !t.includes("free") && !t.includes("espectador")) return false;
+            if (tournamentVal === "freeplay" && !t.includes("free") && !t.includes("espectador") && !t.includes("público")) return false;
         }
 
         // Filtro por Calificación
@@ -602,8 +606,15 @@ function renderCharts() {
     // 3. Chart: Participación por Torneo (Doughnut)
     const tournamentCounts = {};
     filteredResponses.forEach(r => {
-        const name = r.tournament || "General";
-        tournamentCounts[name] = (tournamentCounts[name] || 0) + 1;
+        const raw = r.tournament || "General";
+        const parts = raw.split(/,\s*|\s*\+\s*/).map(s => s.trim()).filter(Boolean);
+        if (parts.length === 0) {
+            tournamentCounts["General"] = (tournamentCounts["General"] || 0) + 1;
+        } else {
+            parts.forEach(name => {
+                tournamentCounts[name] = (tournamentCounts[name] || 0) + 1;
+            });
+        }
     });
 
     const tourLabels = Object.keys(tournamentCounts);
@@ -772,14 +783,18 @@ function renderTable() {
         const stars = parseInt(r.overallRating, 10) || 5;
         const starsHtml = `<span class="star-rating-cell">${stars} <i class="fa-solid fa-star"></i></span>`;
 
-        // Torneo badge
-        const tLower = (r.tournament || "").toLowerCase();
-        let tClass = "pill-other";
-        if (tLower.includes("smash")) tClass = "pill-smash";
-        else if (tLower.includes("fc")) tClass = "pill-fc";
-        else if (tLower.includes("mario")) tClass = "pill-mk";
-        else if (tLower.includes("street")) tClass = "pill-sf";
-        else if (tLower.includes("valorant")) tClass = "pill-val";
+        // Torneo badges (permite 1 o 2 torneos)
+        const tourList = (r.tournament || "General").split(/,\s*|\s*\+\s*/).map(s => s.trim()).filter(Boolean);
+        const tourBadgesHtml = tourList.map(tName => {
+            const tLower = tName.toLowerCase();
+            let tClass = "pill-other";
+            if (tLower.includes("smash")) tClass = "pill-smash";
+            else if (tLower.includes("fc")) tClass = "pill-fc";
+            else if (tLower.includes("mario")) tClass = "pill-mk";
+            else if (tLower.includes("street")) tClass = "pill-sf";
+            else if (tLower.includes("nba") || tLower.includes("valorant")) tClass = "pill-val";
+            return `<span class="pill-tag ${tClass}" style="margin: 2px 2px 2px 0; display: inline-block;">${escapeHtml(tName)}</span>`;
+        }).join(" ");
 
         // NPS badge
         const npsVal = parseInt(r.nps, 10);
@@ -802,7 +817,7 @@ function renderTable() {
                 <td style="color: var(--text-muted); font-size: 0.75rem; white-space: nowrap;">${escapeHtml(r.dateFormatted || "Reciente")}</td>
                 <td style="font-weight: 700; color: #ffffff;">${escapeHtml(r.gamertag || "Anónimo")}</td>
                 <td style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(r.email || "-")}</td>
-                <td><span class="pill-tag ${tClass}">${escapeHtml(r.tournament || "General")}</span></td>
+                <td>${tourBadgesHtml}</td>
                 <td>${starsHtml}</td>
                 <td style="font-size: 0.75rem; color: var(--text-muted);">
                     H:${r.metricHardware || "-"} P:${r.metricPunctuality || "-"} S:${r.metricStaff || "-"}
