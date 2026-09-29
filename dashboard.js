@@ -155,19 +155,61 @@ function initControls() {
     if (searchFilter) searchFilter.addEventListener("input", debounce(applyFilters, 250));
 
     if (btnRefresh) {
-        btnRefresh.addEventListener("click", () => {
+        btnRefresh.addEventListener("click", async () => {
             const icon = document.getElementById("refresh-icon");
+            btnRefresh.disabled = true;
             if (icon) icon.classList.add("fa-spin");
-            loadDashboardData(false).then(() => {
+
+            showDashboardBanner("Sincronizando con Google Sheets...", "loading");
+
+            try {
+                await loadDashboardData(false);
+                showDashboardBanner(`✅ Sincronizado en vivo: ${allResponses.length} registros de Google Sheets`, "success");
+            } catch (err) {
+                console.error("Error sincronizando:", err);
+                showDashboardBanner("⚠️ No se pudo sincronizar con Google Sheets", "error");
+            } finally {
                 setTimeout(() => {
+                    btnRefresh.disabled = false;
                     if (icon) icon.classList.remove("fa-spin");
                 }, 600);
-            });
+            }
         });
     }
 
     if (btnExport) {
         btnExport.addEventListener("click", exportAllCsv);
+    }
+}
+
+// Banner de Notificación Rápida para Sincronización
+function showDashboardBanner(msg, type = "info") {
+    const banner = document.getElementById("sync-banner");
+    const textEl = document.getElementById("sync-banner-text");
+    if (!banner || !textEl) return;
+
+    textEl.textContent = msg;
+    banner.style.display = "block";
+    banner.style.animation = "fadeIn 0.3s ease";
+
+    if (type === "success") {
+        banner.style.borderColor = "rgba(16, 185, 129, 0.4)";
+        banner.style.background = "rgba(16, 185, 129, 0.1)";
+        textEl.style.color = "#34d399";
+    } else if (type === "error") {
+        banner.style.borderColor = "rgba(239, 68, 68, 0.4)";
+        banner.style.background = "rgba(239, 68, 68, 0.1)";
+        textEl.style.color = "#f87171";
+    } else {
+        banner.style.borderColor = "rgba(168, 85, 247, 0.4)";
+        banner.style.background = "rgba(168, 85, 247, 0.1)";
+        textEl.style.color = "#c084fc";
+    }
+
+    if (type !== "loading") {
+        setTimeout(() => {
+            banner.style.display = "none";
+        }, 4000);
     }
 }
 
@@ -180,10 +222,13 @@ async function loadDashboardData(isBackground = false) {
     // Limpiar de inmediato cualquier respuesta de prueba guardada localmente
     localStorage.removeItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
 
-    // 1. Consultar Webhook oficial de Google Sheets
+    // 1. Consultar Webhook oficial de Google Sheets (con _t para evitar caché de navegador/red)
     try {
         if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.length > 20) {
-            const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+            const sep = GOOGLE_SHEETS_WEBHOOK_URL.includes("?") ? "&" : "?";
+            const freshUrl = `${GOOGLE_SHEETS_WEBHOOK_URL}${sep}_t=${Date.now()}`;
+            
+            const response = await fetch(freshUrl, {
                 method: "GET",
                 cache: "no-store"
             });
@@ -819,8 +864,25 @@ function renderTable() {
                 <td style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(r.email || "-")}</td>
                 <td>${tourBadgesHtml}</td>
                 <td>${starsHtml}</td>
-                <td style="font-size: 0.75rem; color: var(--text-muted);">
-                    H:${r.metricHardware || "-"} P:${r.metricPunctuality || "-"} S:${r.metricStaff || "-"}
+                <td style="font-size: 0.76rem; min-width: 145px; padding: 6px 10px;">
+                    <div style="display: flex; flex-direction: column; gap: 3px; line-height: 1.3;">
+                        <span style="display: flex; justify-content: space-between; gap: 6px;">
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-clock" style="color: #a855f7; width: 14px;"></i> Puntualidad:</span>
+                            <strong style="color: #f3f4f6;">${r.metricPunctuality || "-"}★</strong>
+                        </span>
+                        <span style="display: flex; justify-content: space-between; gap: 6px;">
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-microchip" style="color: #06b6d4; width: 14px;"></i> Hardware:</span>
+                            <strong style="color: #f3f4f6;">${r.metricHardware || "-"}★</strong>
+                        </span>
+                        <span style="display: flex; justify-content: space-between; gap: 6px;">
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-user-shield" style="color: #10b981; width: 14px;"></i> Staff/Jueces:</span>
+                            <strong style="color: #f3f4f6;">${r.metricStaff || "-"}★</strong>
+                        </span>
+                        <span style="display: flex; justify-content: space-between; gap: 6px;">
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-volume-high" style="color: #f59e0b; width: 14px;"></i> Ambiente:</span>
+                            <strong style="color: #f3f4f6;">${r.metricAtmosphere || "-"}★</strong>
+                        </span>
+                    </div>
                 </td>
                 <td>${rifasHtml}</td>
                 <td>${npsBadge}</td>

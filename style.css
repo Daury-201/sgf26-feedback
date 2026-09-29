@@ -859,6 +859,40 @@ body {
     color: #000;
 }
 
+/* Grilla específica para la escala de Rifas (1 al 10) */
+#rifas-bar {
+    grid-template-columns: repeat(10, 1fr);
+}
+
+/* Colores dinámicos para Rifas (1-4 Rojo, 5-7 Azul, 8-10 Verde) */
+.nps-segmented-bar button[data-rifas="1"].active,
+.nps-segmented-bar button[data-rifas="2"].active,
+.nps-segmented-bar button[data-rifas="3"].active,
+.nps-segmented-bar button[data-rifas="4"].active {
+    background: #ef4444;
+    border-color: #f87171;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+    color: #fff;
+}
+
+.nps-segmented-bar button[data-rifas="5"].active,
+.nps-segmented-bar button[data-rifas="6"].active,
+.nps-segmented-bar button[data-rifas="7"].active {
+    background: #06b6d4;
+    border-color: #38bdf8;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.7);
+    color: #000;
+}
+
+.nps-segmented-bar button[data-rifas="8"].active,
+.nps-segmented-bar button[data-rifas="9"].active,
+.nps-segmented-bar button[data-rifas="10"].active {
+    background: #10b981;
+    border-color: #34d399;
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.85);
+    color: #000;
+}
+
 .nps-legend {
     display: flex;
     justify-content: space-between;
@@ -1266,6 +1300,11 @@ body {
 
     .nps-segmented-bar {
         grid-template-columns: repeat(6, 1fr);
+        gap: 5px;
+    }
+
+    #rifas-bar {
+        grid-template-columns: repeat(5, 1fr);
         gap: 5px;
     }
 
