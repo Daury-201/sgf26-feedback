@@ -1,171 +1,137 @@
 /**
  * STUDENTS GAMING FESTIVAL 2026 (SGF 2026)
  * Executive Feedback Analytics Dashboard
- * Chart.js Visualizations, Dynamic Filters, Real-Time Sync & CSV Export
+ * 
+ * 1. Admin Authentication Gate (Security Login)
+ * 2. Real-Time Data Pipeline (Google Sheets Webhook + LocalStorage)
+ * 3. Pure Real Data Engine (Zero Hardcoded Mock Data)
+ * 4. Interactive Charts (Chart.js), Filtering, and CSV Export
  */
 
 const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyZ13BhWqpeBJ-vIhJ0U8iAxQJbTSXunhOvqhhk0pune6b3OiRFgG7D-H5PDaf8bebQow/exec";
-const LOCAL_STORAGE_KEY = "sgf26_feedback_submissions_v1";
+const LOCAL_STORAGE_SUBMISSIONS_KEY = "sgf26_feedback_submissions_v1";
+const AUTH_STORAGE_KEY = "sgf26_admin_authenticated";
 
-// Dataset en memoria
+// Credenciales Administrativas Oficiales SGF 2026
+const VALID_USERS = ["admin", "sgf2026", "comite", "pucmm"];
+const VALID_PASSWORDS = ["sgf2026", "admin2026", "pucmm2026", "esports2026"];
+
+// Estado en memoria
 let allResponses = [];
 let filteredResponses = [];
 let currentTab = "liked";
 
-// Instancias de Chart.js para actualización dinámica
+// Instancias de Chart.js
 let chartStars = null;
 let chartRadar = null;
 let chartTournaments = null;
 let chartNps = null;
 
 // =========================================================================
-// DATOS REALISTAS DE CALIBRACIÓN INICIAL (Para visualizar inmediatamente)
-// =========================================================================
-const BASELINE_SAMPLE_DATA = [
-    {
-        id: "SGF-892A1",
-        dateFormatted: "29/09/2026, 11:20 AM",
-        gamertag: "NovaStrike",
-        email: "novastrike@gmail.com",
-        tournament: "Super Smash Bros. Ultimate",
-        overallRating: 5,
-        metricPunctuality: 5,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "La pantalla gigante central y el nivel de los monitores de 144Hz. Cero input lag.",
-        suggestions: "Hacer un top 16 en streaming con más cámaras para los competidores."
-    },
-    {
-        id: "SGF-734B2",
-        dateFormatted: "29/09/2026, 11:35 AM",
-        gamertag: "Matador_RD",
-        email: "matador26@outlook.com",
-        tournament: "EA Sports FC 26",
-        overallRating: 5,
-        metricPunctuality: 4,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 4,
-        nps: 9,
-        likedMost: "La organización de las estaciones de PS5 y los jueces siempre atentos a cada partido.",
-        suggestions: "Tener una zona de calentamiento con más tiempo antes de los cuartos de final."
-    },
-    {
-        id: "SGF-619C3",
-        dateFormatted: "29/09/2026, 11:42 AM",
-        gamertag: "DriftQueen",
-        email: "driftq@gmail.com",
-        tournament: "Mario Kart 8 Deluxe",
-        overallRating: 5,
-        metricPunctuality: 5,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "La energía de la comunidad y la narración en vivo durante la final de Mario Kart.",
-        suggestions: "Agregar torneos por equipos 2v2 para 2027."
-    },
-    {
-        id: "SGF-508D4",
-        dateFormatted: "29/09/2026, 12:05 PM",
-        gamertag: "ShadowClaw",
-        email: "shadowclaw@hotmail.com",
-        tournament: "Street Fighter 6",
-        overallRating: 4,
-        metricPunctuality: 4,
-        metricHardware: 5,
-        metricStaff: 4,
-        metricAtmosphere: 5,
-        nps: 9,
-        likedMost: "El setup de los fightsticks y la calidad de audio en los auriculares para cada match.",
-        suggestions: "Poner un bracket impreso o pantalla exclusiva para ver el avance del loser bracket."
-    },
-    {
-        id: "SGF-412E5",
-        dateFormatted: "29/09/2026, 12:15 PM",
-        gamertag: "ViperV",
-        email: "viper.v@pucmm.edu.do",
-        tournament: "Valorant 5v5",
-        overallRating: 5,
-        metricPunctuality: 5,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "Las PCs gamers corrieron a más de 300 FPS estables. La mejor arena competitiva.",
-        suggestions: "Mantener el mismo formato LAN para 2027 y aumentar los cupos de equipos."
-    },
-    {
-        id: "SGF-390F6",
-        dateFormatted: "29/09/2026, 12:22 PM",
-        gamertag: "PixelMaster",
-        email: "pixelm@gmail.com",
-        tournament: "Zona Free Play / Espectador",
-        overallRating: 5,
-        metricPunctuality: 5,
-        metricHardware: 4,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "Los stands interactivos y poder jugar retas con amigos mientras se disputaban las finales.",
-        suggestions: "Tener más asientos cerca del escenario principal."
-    },
-    {
-        id: "SGF-281G7",
-        dateFormatted: "29/09/2026, 12:30 PM",
-        gamertag: "GamerRD_01",
-        email: "gamerrd01@gmail.com",
-        tournament: "Super Smash Bros. Ultimate",
-        overallRating: 4,
-        metricPunctuality: 3,
-        metricHardware: 5,
-        metricStaff: 4,
-        metricAtmosphere: 5,
-        nps: 8,
-        likedMost: "El nivel de los competidores y los trofeos oficiales. Todo muy profesional.",
-        suggestions: "Iniciar la primera ronda más puntual para no retrasar el horario de la tarde."
-    },
-    {
-        id: "SGF-194H8",
-        dateFormatted: "29/09/2026, 12:34 PM",
-        gamertag: "ElTitan",
-        email: "eltitan@gmail.com",
-        tournament: "EA Sports FC 26",
-        overallRating: 5,
-        metricPunctuality: 5,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "Los monitores dedicados y la imparcialidad de los jueces de mesa.",
-        suggestions: "Hacer una liga clasificatoria universitaria previa al evento grande."
-    },
-    {
-        id: "SGF-105I9",
-        dateFormatted: "29/09/2026, 12:40 PM",
-        gamertag: "CyberKitsune",
-        email: "cyberkitsune@yahoo.com",
-        tournament: "Mario Kart 8 Deluxe",
-        overallRating: 5,
-        metricPunctuality: 4,
-        metricHardware: 5,
-        metricStaff: 5,
-        metricAtmosphere: 5,
-        nps: 10,
-        likedMost: "La animación de las luces del escenario sincronizadas con los momentos decisivos.",
-        suggestions: "Más variedad de snacks y bebidas gamer en el área de comida."
-    }
-];
-
-// =========================================================================
-// INICIALIZACIÓN DEL DASHBOARD
+// 1. CONTROL DE ACCESO Y AUTENTICACIÓN (LOGIN GATE)
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
+    initAuth();
+});
+
+function initAuth() {
+    const isAuth = sessionStorage.getItem(AUTH_STORAGE_KEY) === "true" || localStorage.getItem(AUTH_STORAGE_KEY) === "true";
+    const loginScreen = document.getElementById("login-screen");
+    const dashboardApp = document.getElementById("dashboard-app");
+
+    if (isAuth) {
+        if (loginScreen) loginScreen.style.display = "none";
+        if (dashboardApp) dashboardApp.style.display = "block";
+        initDashboard();
+    } else {
+        if (loginScreen) loginScreen.style.display = "flex";
+        if (dashboardApp) dashboardApp.style.display = "none";
+        setupLoginForm();
+    }
+
+    // Botón de alternar visibilidad de contraseña
+    const btnTogglePass = document.getElementById("btn-toggle-password");
+    const passInput = document.getElementById("admin-pass");
+    const passIcon = document.getElementById("toggle-pass-icon");
+    if (btnTogglePass && passInput && passIcon) {
+        btnTogglePass.addEventListener("click", () => {
+            if (passInput.type === "password") {
+                passInput.type = "text";
+                passIcon.className = "fa-regular fa-eye-slash";
+            } else {
+                passInput.type = "password";
+                passIcon.className = "fa-regular fa-eye";
+            }
+        });
+    }
+
+    // Botón de Logout
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            window.location.reload();
+        });
+    }
+}
+
+function setupLoginForm() {
+    const form = document.getElementById("login-form");
+    const userInput = document.getElementById("admin-user");
+    const passInput = document.getElementById("admin-pass");
+    const rememberChk = document.getElementById("chk-remember-session");
+    const errorMsg = document.getElementById("login-error-msg");
+    const errorText = document.getElementById("login-error-text");
+
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const user = (userInput ? userInput.value.trim().toLowerCase() : "");
+        const pass = (passInput ? passInput.value.trim().toLowerCase() : "");
+
+        const isValidUser = VALID_USERS.includes(user);
+        const isValidPass = VALID_PASSWORDS.includes(pass);
+
+        if (isValidUser && isValidPass) {
+            if (errorMsg) errorMsg.classList.remove("visible");
+
+            if (rememberChk && rememberChk.checked) {
+                localStorage.setItem(AUTH_STORAGE_KEY, "true");
+            } else {
+                sessionStorage.setItem(AUTH_STORAGE_KEY, "true");
+            }
+
+            const loginScreen = document.getElementById("login-screen");
+            const dashboardApp = document.getElementById("dashboard-app");
+            if (loginScreen) loginScreen.style.display = "none";
+            if (dashboardApp) {
+                dashboardApp.style.display = "block";
+                dashboardApp.style.animation = "loginFadeIn 0.4s ease-out";
+            }
+
+            initDashboard();
+        } else {
+            if (errorMsg) {
+                errorMsg.classList.add("visible");
+                if (errorText) errorText.textContent = "Credenciales incorrectas. Verifica usuario o contraseña.";
+            }
+            if (passInput) {
+                passInput.value = "";
+                passInput.focus();
+            }
+        }
+    });
+}
+
+// =========================================================================
+// 2. INICIALIZACIÓN DEL DASHBOARD Y CONTROLES
+// =========================================================================
+function initDashboard() {
     initControls();
     loadDashboardData();
-});
+}
 
 function initControls() {
     const tournamentFilter = document.getElementById("filter-tournament");
@@ -196,39 +162,49 @@ function initControls() {
 }
 
 // =========================================================================
-// CARGA Y UNIFICACIÓN DE DATOS (LOCALSTORAGE + WEBHOOK / LIVE FEED)
+// 3. CARGA DE DATOS 100% REALES (GOOGLE SHEETS WEBHOOK + LOCALSTORAGE)
 // =========================================================================
 async function loadDashboardData() {
     let combined = [];
+    let liveCount = 0;
+    let localCount = 0;
 
-    // 1. Cargar datos locales de envíos reales en esta máquina
+    // 1. Cargar respuestas guardadas en LocalStorage
     try {
-        const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const localRaw = localStorage.getItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
         if (localRaw) {
             const localList = JSON.parse(localRaw);
             if (Array.isArray(localList)) {
                 combined = combined.concat(localList);
+                localCount = localList.length;
             }
         }
     } catch (e) {
-        console.warn("Error leyendo localStorage:", e);
+        console.warn("Lectura de localStorage omitida:", e);
     }
 
-    // 2. Intentar consultar webhook de Google Sheets si tiene método GET habilitado
-    let liveFetched = false;
+    // 2. Consultar Webhook oficial de Google Sheets
     try {
         if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.length > 20) {
             const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
                 method: "GET",
-                mode: "cors"
+                cache: "no-store"
             });
+
             if (response.ok) {
-                const json = await response.json();
+                const text = await response.text();
+                let json = null;
+                try {
+                    json = JSON.parse(text);
+                } catch(err) {
+                    // Google Apps Script aún retornando texto en lugar de JSON
+                }
+
                 if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
                     const mapped = json.data.map(r => ({
-                        id: r["ID Ticket"] || r.id || "SGF-ONLINE",
+                        id: r["ID Ticket"] || r.id || "SGF-SHEET",
                         dateFormatted: r["Fecha Registro"] || r.dateFormatted || "",
-                        gamertag: r["GamerTag"] || r.gamertag || "Competidor",
+                        gamertag: r["GamerTag"] || r.gamertag || "Anónimo",
                         email: r["Email"] || r.email || "",
                         tournament: r["Torneo"] || r.tournament || "General",
                         overallRating: parseInt(r["Calificación General"] || r.overallRating, 10) || 5,
@@ -240,38 +216,36 @@ async function loadDashboardData() {
                         likedMost: r["Lo que más gustó"] || r.likedMost || "",
                         suggestions: r["Sugerencias y 2027"] || r.suggestions || ""
                     }));
-                    combined = combined.concat(mapped);
-                    liveFetched = true;
+
+                    mapped.forEach(item => {
+                        if (!combined.some(c => c.id === item.id)) {
+                            combined.push(item);
+                            liveCount++;
+                        }
+                    });
                 }
             }
         }
     } catch (netErr) {
-        // En caso de CORS normal de Google Apps Script, mantenemos los datos sincronizados
+        console.warn("Sincronización directa con Google Sheets en segundo plano:", netErr);
     }
-
-    // 3. Añadir el baseline representativo evitando duplicados por ID
-    BASELINE_SAMPLE_DATA.forEach(item => {
-        if (!combined.some(c => c.id === item.id)) {
-            combined.push(item);
-        }
-    });
 
     allResponses = combined;
     applyFilters();
 
-    // Actualizar etiqueta de estado
+    // Actualizar badges e indicadores
     const statusLabel = document.getElementById("data-status-label");
     const sourceInd = document.getElementById("source-indicator");
     if (statusLabel) {
-        statusLabel.textContent = `EN VIVO • ${allResponses.length} RESPUESTAS`;
+        statusLabel.textContent = `EN VIVO • ${allResponses.length} RESPUESTAS REALES`;
     }
     if (sourceInd) {
-        sourceInd.innerHTML = `<i class="fa-solid fa-database"></i> ${allResponses.length} Registros Sincronizados`;
+        sourceInd.innerHTML = `<i class="fa-solid fa-database"></i> ${allResponses.length} Respuestas Oficiales`;
     }
 }
 
 // =========================================================================
-// FILTRADO DINÁMICO
+// 4. FILTRADO DINÁMICO
 // =========================================================================
 function applyFilters() {
     const tournamentVal = (document.getElementById("filter-tournament")?.value || "ALL").toLowerCase();
@@ -318,7 +292,7 @@ function applyFilters() {
 }
 
 // =========================================================================
-// CÁLCULO Y RENDER DE KPIS
+// 5. CÁLCULO Y RENDER DE KPIS
 // =========================================================================
 function renderKpis() {
     const total = filteredResponses.length;
@@ -333,8 +307,25 @@ function renderKpis() {
         elBar.style.width = pct + "%";
     }
 
+    // Si no hay respuestas aún
     if (total === 0) {
-        setKpiEmpty();
+        const elCsat = document.getElementById("kpi-csat-score");
+        const elCsatPct = document.getElementById("kpi-csat-percent");
+        const elCsatBadge = document.getElementById("kpi-csat-badge");
+        const elNps = document.getElementById("kpi-nps-score");
+        const elNpsTier = document.getElementById("kpi-nps-tier");
+        const elNpsBreakdown = document.getElementById("kpi-nps-breakdown");
+        const elHw = document.getElementById("kpi-hardware-score");
+        const elHwBadge = document.getElementById("kpi-hw-badge");
+
+        if (elCsat) elCsat.textContent = "0.0";
+        if (elCsatPct) elCsatPct.textContent = "Esperando respuestas";
+        if (elCsatBadge) { elCsatBadge.textContent = "SIN DATOS"; elCsatBadge.className = "kpi-badge badge-gold"; }
+        if (elNps) elNps.textContent = "+0";
+        if (elNpsTier) { elNpsTier.textContent = "N/A"; elNpsTier.className = "kpi-badge badge-purple"; }
+        if (elNpsBreakdown) elNpsBreakdown.textContent = "0% Promotores • 0% Detractores";
+        if (elHw) elHw.textContent = "0.0";
+        if (elHwBadge) elHwBadge.textContent = "N/A";
         return;
     }
 
@@ -418,25 +409,29 @@ function renderKpis() {
     });
     const avgHw = countHw > 0 ? (sumHardware / countHw).toFixed(1) : "5.0";
     const elHw = document.getElementById("kpi-hardware-score");
+    const elHwBadge = document.getElementById("kpi-hw-badge");
     if (elHw) elHw.textContent = avgHw;
-}
-
-function setKpiEmpty() {
-    const elCsat = document.getElementById("kpi-csat-score");
-    const elNps = document.getElementById("kpi-nps-score");
-    const elHw = document.getElementById("kpi-hardware-score");
-    if (elCsat) elCsat.textContent = "0.0";
-    if (elNps) elNps.textContent = "+0";
-    if (elHw) elHw.textContent = "0.0";
+    if (elHwBadge) elHwBadge.textContent = avgHw >= 4.5 ? "TOP TIER" : "APROBADO";
 }
 
 // =========================================================================
-// RENDER DE GRÁFICOS (CHART.JS)
+// 6. RENDER DE GRÁFICOS (CHART.JS) CON SOPORTE DE ESTADO VACÍO
 // =========================================================================
 function renderCharts() {
     if (typeof Chart === "undefined") return;
 
-    // Opciones comunes dark mode cyberpunk
+    const hasData = filteredResponses.length > 0;
+
+    const emptyStars = document.getElementById("empty-stars");
+    const emptyRadar = document.getElementById("empty-radar");
+    const emptyTour = document.getElementById("empty-tournaments");
+    const emptyNps = document.getElementById("empty-nps");
+
+    if (emptyStars) emptyStars.style.display = hasData ? "none" : "flex";
+    if (emptyRadar) emptyRadar.style.display = hasData ? "none" : "flex";
+    if (emptyTour) emptyTour.style.display = hasData ? "none" : "flex";
+    if (emptyNps) emptyNps.style.display = hasData ? "none" : "flex";
+
     const commonPlugins = {
         legend: {
             labels: {
@@ -471,7 +466,7 @@ function renderCharts() {
             data: {
                 labels: ["1 ⭐ Deficiente", "2 ⭐ Regular", "3 ⭐ Bueno", "4 ⭐ Muy Bueno", "5 ⭐ Legendario"],
                 datasets: [{
-                    label: "Votos",
+                    label: "Votos Reales",
                     data: [starCounts[1], starCounts[2], starCounts[3], starCounts[4], starCounts[5]],
                     backgroundColor: [
                         "rgba(244, 63, 94, 0.75)",
@@ -527,10 +522,10 @@ function renderCharts() {
         if (!isNaN(a)) { sumAtm += a; countAtm++; }
     });
 
-    const avgP = countPunc > 0 ? (sumPunc / countPunc).toFixed(2) : 5;
-    const avgH = countHw > 0 ? (sumHw / countHw).toFixed(2) : 5;
-    const avgS = countStaff > 0 ? (sumStaff / countStaff).toFixed(2) : 5;
-    const avgA = countAtm > 0 ? (sumAtm / countAtm).toFixed(2) : 5;
+    const avgP = countPunc > 0 ? (sumPunc / countPunc).toFixed(2) : 0;
+    const avgH = countHw > 0 ? (sumHw / countHw).toFixed(2) : 0;
+    const avgS = countStaff > 0 ? (sumStaff / countStaff).toFixed(2) : 0;
+    const avgA = countAtm > 0 ? (sumAtm / countAtm).toFixed(2) : 0;
 
     const ctxRadar = document.getElementById("chart-radar")?.getContext("2d");
     if (ctxRadar) {
@@ -540,7 +535,7 @@ function renderCharts() {
             data: {
                 labels: ["Puntualidad", "Hardware y Setups", "Staff y Jueces", "Ambiente y Audio"],
                 datasets: [{
-                    label: "Promedio Operativo (1-5)",
+                    label: "Evaluación Operativa (1-5)",
                     data: [avgP, avgH, avgS, avgA],
                     backgroundColor: "rgba(6, 182, 212, 0.25)",
                     borderColor: "#06b6d4",
@@ -578,7 +573,7 @@ function renderCharts() {
     // 3. Chart: Participación por Torneo (Doughnut)
     const tournamentCounts = {};
     filteredResponses.forEach(r => {
-        const name = r.tournament || "Otros";
+        const name = r.tournament || "General";
         tournamentCounts[name] = (tournamentCounts[name] || 0) + 1;
     });
 
@@ -591,17 +586,12 @@ function renderCharts() {
         chartTournaments = new Chart(ctxTournaments, {
             type: "doughnut",
             data: {
-                labels: tourLabels,
+                labels: tourLabels.length > 0 ? tourLabels : ["Sin Respuestas"],
                 datasets: [{
-                    data: tourData,
-                    backgroundColor: [
-                        "#ef4444", // Smash (Red)
-                        "#10b981", // FC 24 (Green)
-                        "#3b82f6", // Mario Kart (Blue)
-                        "#f59e0b", // Street Fighter (Gold)
-                        "#f43f5e", // Valorant (Rose)
-                        "#a855f7"  // Free Play (Purple)
-                    ],
+                    data: tourData.length > 0 ? tourData : [1],
+                    backgroundColor: tourData.length > 0 ? [
+                        "#ef4444", "#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#a855f7"
+                    ] : ["rgba(255, 255, 255, 0.08)"],
                     borderColor: "#090314",
                     borderWidth: 3
                 }]
@@ -648,12 +638,10 @@ function renderCharts() {
                     `Detractores (0-6): ${npsDet}`
                 ],
                 datasets: [{
-                    data: [npsProm, npsPass, npsDet],
-                    backgroundColor: [
-                        "#10b981", // Promoters Green
-                        "#f59e0b", // Passives Amber
-                        "#f43f5e"  // Detractors Red
-                    ],
+                    data: (npsProm + npsPass + npsDet > 0) ? [npsProm, npsPass, npsDet] : [0, 0, 1],
+                    backgroundColor: (npsProm + npsPass + npsDet > 0) ? [
+                        "#10b981", "#f59e0b", "#f43f5e"
+                    ] : ["rgba(255, 255, 255, 0.08)"],
                     borderColor: "#090314",
                     borderWidth: 3
                 }]
@@ -679,7 +667,7 @@ function renderCharts() {
 }
 
 // =========================================================================
-// RENDER DE TESTIMONIOS Y SUGERENCIAS
+// 7. RENDER DE TESTIMONIOS Y SUGERENCIAS
 // =========================================================================
 function switchQuotesTab(tab) {
     currentTab = tab;
@@ -696,21 +684,22 @@ function renderQuotes() {
     if (!container) return;
 
     const itemsWithText = filteredResponses.filter(r => {
-        if (currentTab === "liked") return r.likedMost && r.likedMost.trim().length > 3;
-        return r.suggestions && r.suggestions.trim().length > 3;
+        if (currentTab === "liked") return r.likedMost && r.likedMost.trim().length > 1;
+        return r.suggestions && r.suggestions.trim().length > 1;
     });
 
     if (itemsWithText.length === 0) {
         container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);">
-                <i class="fa-regular fa-comment-dots" style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
-                No hay comentarios registrados para este filtro.
+            <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-dim);">
+                <i class="fa-regular fa-comment-dots" style="font-size: 2.4rem; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">No hay comentarios registrados todavía</p>
+                <p style="font-size: 0.8rem;">Las opiniones que los participantes envíen en la encuesta se mostrarán aquí de inmediato.</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = itemsWithText.slice(0, 9).map(r => {
+    container.innerHTML = itemsWithText.slice(0, 12).map(r => {
         const text = currentTab === "liked" ? r.likedMost : r.suggestions;
         const tag = currentTab === "liked" ? "Destacado del Festival" : "Sugerencia SGF 2027";
         return `
@@ -727,7 +716,7 @@ function renderQuotes() {
 }
 
 // =========================================================================
-// RENDER DE TABLA DE RESPUESTAS
+// 8. RENDER DE TABLA DE RESPUESTAS
 // =========================================================================
 function renderTable() {
     const tbody = document.getElementById("responses-tbody");
@@ -741,8 +730,9 @@ function renderTable() {
     if (filteredResponses.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 36px; color: var(--text-dim);">
-                    Ninguna respuesta coincide con los filtros aplicados.
+                <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-dim);">
+                    <i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block; opacity: 0.4;"></i>
+                    No hay respuestas que mostrar con los filtros actuales.
                 </td>
             </tr>
         `;
@@ -772,7 +762,7 @@ function renderTable() {
         }
 
         const comments = [r.likedMost, r.suggestions].filter(Boolean).join(" • ");
-        const commentPreview = comments.length > 55 ? comments.substring(0, 52) + "..." : (comments || "Sin comentarios");
+        const commentPreview = comments.length > 60 ? comments.substring(0, 58) + "..." : (comments || "Sin comentarios");
 
         return `
             <tr>
@@ -782,7 +772,7 @@ function renderTable() {
                 <td><span class="pill-tag ${tClass}">${escapeHtml(r.tournament || "General")}</span></td>
                 <td>${starsHtml}</td>
                 <td style="font-size: 0.75rem; color: var(--text-muted);">
-                    H:${r.metricHardware || 5} P:${r.metricPunctuality || 5} S:${r.metricStaff || 5}
+                    H:${r.metricHardware || "-"} P:${r.metricPunctuality || "-"} S:${r.metricStaff || "-"}
                 </td>
                 <td>${npsBadge}</td>
                 <td style="max-width: 280px; font-size: 0.78rem; color: var(--text-light); line-height: 1.4;" title="${escapeHtml(comments)}">
@@ -794,10 +784,10 @@ function renderTable() {
 }
 
 // =========================================================================
-// EXPORTACIÓN A CSV / EXCEL
+// 9. EXPORTACIÓN A CSV / EXCEL
 // =========================================================================
 function exportAllCsv() {
-    exportToCsv(allResponses, "SGF2026_Feedback_Completo.csv");
+    exportToCsv(allResponses, "SGF2026_Feedback_Oficial.csv");
 }
 window.exportAllCsv = exportAllCsv;
 
@@ -808,7 +798,7 @@ window.exportFilteredCsv = exportFilteredCsv;
 
 function exportToCsv(dataList, filename) {
     if (!dataList || dataList.length === 0) {
-        alert("No hay datos para exportar.");
+        alert("No hay respuestas registradas para exportar.");
         return;
     }
 
@@ -847,7 +837,7 @@ function exportToCsv(dataList, filename) {
 }
 
 // =========================================================================
-// UTILIDADES
+// 10. UTILIDADES
 // =========================================================================
 function escapeHtml(str) {
     if (!str) return "";
