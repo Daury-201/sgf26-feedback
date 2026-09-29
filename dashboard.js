@@ -131,6 +131,16 @@ function setupLoginForm() {
 function initDashboard() {
     initControls();
     loadDashboardData();
+
+    // Sincronización automática periódica cada 10 segundos
+    setInterval(() => {
+        loadDashboardData(true);
+    }, 10000);
+
+    // Sincronización automática instantánea al regresar a esta pestaña
+    window.addEventListener("focus", () => {
+        loadDashboardData(true);
+    });
 }
 
 function initControls() {
@@ -148,7 +158,7 @@ function initControls() {
         btnRefresh.addEventListener("click", () => {
             const icon = document.getElementById("refresh-icon");
             if (icon) icon.classList.add("fa-spin");
-            loadDashboardData().then(() => {
+            loadDashboardData(false).then(() => {
                 setTimeout(() => {
                     if (icon) icon.classList.remove("fa-spin");
                 }, 600);
@@ -162,28 +172,13 @@ function initControls() {
 }
 
 // =========================================================================
-// 3. CARGA DE DATOS 100% REALES (GOOGLE SHEETS WEBHOOK + LOCALSTORAGE)
+// 3. CARGA DE DATOS REALES (GOOGLE SHEETS ES LA FUENTE AUTORIZADA)
 // =========================================================================
-async function loadDashboardData() {
+async function loadDashboardData(isBackground = false) {
     let combined = [];
-    let liveCount = 0;
-    let localCount = 0;
+    let sheetsConnected = false;
 
-    // 1. Cargar respuestas guardadas en LocalStorage
-    try {
-        const localRaw = localStorage.getItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
-        if (localRaw) {
-            const localList = JSON.parse(localRaw);
-            if (Array.isArray(localList)) {
-                combined = combined.concat(localList);
-                localCount = localList.length;
-            }
-        }
-    } catch (e) {
-        console.warn("Lectura de localStorage omitida:", e);
-    }
-
-    // 2. Consultar Webhook oficial de Google Sheets
+    // 1. Consultar Webhook oficial de Google Sheets
     try {
         if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.length > 20) {
             const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
@@ -197,14 +192,24 @@ async function loadDashboardData() {
                 try {
                     json = JSON.parse(text);
                 } catch(err) {
-                    // Google Apps Script aún retornando texto en lugar de JSON
+                    console.warn("Respuesta no es JSON válido:", err);
                 }
 
-                if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
-                    const mapped = json.data.map(r => ({
+                if (json && json.status === "success" && Array.isArray(json.data)) {
+                    sheetsConnected = true;
+
+                    // Descartar filas vacías o borradas en Google Sheets
+                    const validData = json.data.filter(r => {
+                        const tag = (r["GamerTag"] || r.gamertag || "").toString().trim();
+                        const id = (r["ID Ticket"] || r.id || "").toString().trim();
+                        const stars = r["Calificación General"] || r.overallRating;
+                        return tag !== "" || (id !== "" && id !== "SGF-SHEET" && id !== "N/A") || (stars !== "" && stars !== undefined);
+                    });
+
+                    combined = validData.map(r => ({
                         id: r["ID Ticket"] || r.id || "SGF-SHEET",
-                        dateFormatted: r["Fecha Registro"] || r.dateFormatted || "",
-                        gamertag: r["GamerTag"] || r.gamertag || "Anónimo",
+                        dateFormatted: r["Fecha Registro"] || r.dateFormatted || "Reciente",
+                        gamertag: r["GamerTag"] || r.gamertag || "Competidor",
                         email: r["Email"] || r.email || "",
                         tournament: r["Torneo"] || r.tournament || "General",
                         overallRating: parseInt(r["Calificación General"] || r.overallRating, 10) || 5,
@@ -217,17 +222,35 @@ async function loadDashboardData() {
                         suggestions: r["Sugerencias y 2027"] || r.suggestions || ""
                     }));
 
-                    mapped.forEach(item => {
-                        if (!combined.some(c => c.id === item.id)) {
-                            combined.push(item);
-                            liveCount++;
-                        }
-                    });
+                    // SINCRONIZACIÓN AUTOMÁTICA DE BORRADO:
+                    // Si en Google Sheets se borraron datos (o está vacía), limpiar también localStorage
+                    // para que no sigan apareciendo respuestas viejas de prueba
+                    if (combined.length === 0) {
+                        localStorage.removeItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
+                        localStorage.removeItem("sgf26_user_feedback_submitted");
+                        localStorage.removeItem("sgf26_submitted_gamertag");
+                        localStorage.removeItem("sgf26_submitted_game");
+                    }
                 }
             }
         }
     } catch (netErr) {
-        console.warn("Sincronización directa con Google Sheets en segundo plano:", netErr);
+        console.warn("Sincronización con Google Sheets:", netErr);
+    }
+
+    // 2. Solo si Google Sheets NO respondió (sin internet / sin webhook), recurrir a localStorage
+    if (!sheetsConnected) {
+        try {
+            const localRaw = localStorage.getItem(LOCAL_STORAGE_SUBMISSIONS_KEY);
+            if (localRaw) {
+                const localList = JSON.parse(localRaw);
+                if (Array.isArray(localList)) {
+                    combined = localList;
+                }
+            }
+        } catch (e) {
+            console.warn("Lectura de localStorage omitida:", e);
+        }
     }
 
     allResponses = combined;

@@ -165,6 +165,20 @@ function doGet(e) {
     var results = [];
     for (var r = 1; r < rows.length; r++) {
       var row = rows[r];
+
+      // Omitir filas vacías (si el organizador borró celdas en la hoja)
+      var tieneContenido = false;
+      for (var c = 0; c < row.length; c++) {
+        if (String(row[c]).trim() !== "") {
+          tieneContenido = true;
+          break;
+        }
+      }
+      if (!tieneContenido) continue;
+
+      // Asegurar que tenga al menos identificador o GamerTag
+      if (!row[0] && !row[2] && !row[5]) continue;
+
       var item = {};
       for (var c = 0; c < headers.length; c++) {
         item[headers[c]] = row[c];
