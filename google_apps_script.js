@@ -289,16 +289,203 @@ function enviarCorreoIndividual(destinatario, gamertag) {
 }
 
 // ============================================================================
-// 6. GENERADOR DE PLANTILLA HTML OFICIAL CYBERPUNK
+// 6. GENERADOR DE PLANTILLA HTML OFICIAL (ADAPTATIVA A MODO CLARO Y OSCURO)
 // ============================================================================
 function obtenerPlantillaEmailHtml(gamertag, email, linkPersonalizado) {
   var urlFinal = linkPersonalizado || ("https://sgf26-feedback.vercel.app/?gamertag=" + encodeURIComponent(gamertag) + "&email=" + encodeURIComponent(email));
 
-  var baseHtml = '<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Evaluación Oficial de Experiencia • Students Gaming Festival 2026</title>\n    <!--[if mso]>\n    <style type="text/css">\n      body, table, td, p, a { font-family: \'Segoe UI\', Arial, sans-serif !important; }\n    </style>\n    <![endif]-->\n</head>\n<body style="margin: 0; padding: 0; background-color: #05020a; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; color: #e4e4e7;">\n\n    <!-- Pre-header invisible para visualización en bandeja de entrada -->\n    <div style="display: none; font-size: 1px; color: #05020a; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">\n        Consulta Oficial de Competidores: Tu evaluación define los estándares, setups y juegos del SGF 2027.\n    </div>\n\n    <!-- Wrapper Exterior -->\n    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #05020a; min-height: 100vh; padding: 36px 12px;">\n        <tr>\n            <td align="center">\n\n                <!-- Tarjeta Principal (Máximo 620px) -->\n                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 620px; background: #0c0418; border: 1px solid rgba(168, 85, 247, 0.32); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);">\n                    \n                    <!-- Línea de Acento Neón Superior -->\n                    <tr>\n                        <td height="4" style="background: linear-gradient(90deg, #a855f7 0%, #06b6d4 50%, #f59e0b 100%);"></td>\n                    </tr>\n\n                    <!-- Cabecera Institucional con Logo Oficial -->\n                    <tr>\n                        <td align="center" style="padding: 40px 30px 24px 30px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.14) 0%, transparent 100%);">\n                            \n                            <!-- Logo Oficial del Festival -->\n                            <img src="https://sgf26-feedback.vercel.app/images/logo.png" alt="Students Gaming Festival 2026" width="170" style="display: block; max-width: 170px; height: auto; margin: 0 auto 20px auto; border: 0; outline: none; filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.5));">\n\n                            <!-- Badge de Categoría Oficial -->\n                            <table role="presentation" border="0" cellpadding="0" cellspacing="0">\n                                <tr>\n                                    <td style="background: rgba(168, 85, 247, 0.16); border: 1px solid rgba(168, 85, 247, 0.45); border-radius: 9999px; padding: 5px 18px; text-align: center;">\n                                        <span style="font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #c084fc; text-transform: uppercase;">\n                                            COMUNICADO OFICIAL • CEIT\n                                        </span>\n                                    </td>\n                                </tr>\n                            </table>\n\n                            <h1 style="margin: 18px 0 6px 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; line-height: 1.25;">\n                                EVALUACIÓN OFICIAL DE EXPERIENCIA\n                            </h1>\n                            <p style="margin: 0; font-size: 13px; color: #94a3b8; letter-spacing: 0.5px;">\n                                Students Gaming Festival 2026 • CEIT & PUCMM\n                            </p>\n                        </td>\n                    </tr>\n\n                    <!-- Separador de Precisión -->\n                    <tr>\n                        <td style="padding: 0 40px;">\n                            <div style="height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.45) 50%, transparent 100%);"></div>\n                        </td>\n                    </tr>\n\n                    <!-- Cuerpo Principal del Correo -->\n                    <tr>\n                        <td style="padding: 32px 42px 20px 42px; color: #e4e4e7; font-size: 15px; line-height: 1.75;">\n                            \n                            <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #ffffff;">\n                                Estimado/a participante <span style="color: #c084fc;">{{GamerTag}}</span>:\n                            </p>\n\n                            <p style="margin: 0 0 16px 0; color: #d4d4d8;">\n                                En nombre del Comité Organizador del <strong>Students Gaming Festival 2026</strong>, el <strong>CEIT</strong> y la <strong>PUCMM</strong>, agradecemos tu destacada participación y entrega competitiva en esta edición.\n                            </p>\n\n                            <p style="margin: 0 0 24px 0; color: #a1a1aa;">\n                                Con el propósito de perfeccionar la infraestructura técnica, el flujo de partidas y la calidad de los setups para el <strong>SGF 2027</strong>, hemos habilitado la Consulta Oficial de Satisfacción para todos los competidores registrados.\n                            </p>\n\n                            <!-- Cuadrícula Ejecutiva de 3 Ejes de Evaluación con SVG Vectoriales -->\n                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 26px 0; background: rgba(16, 7, 30, 0.85); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 12px; overflow: hidden;">\n                                <tr>\n                                    <!-- Eje 1: Calidad Competitiva -->\n                                    <td width="33%" style="text-align: center; padding: 18px 12px; border-right: 1px solid rgba(255, 255, 255, 0.06);" valign="top">\n                                        <div style="margin-bottom: 8px;">\n                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">\n                                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>\n                                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>\n                                                <path d="M4 22h16"/>\n                                                <path d="M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34"/>\n                                                <path d="M6 4h12v7a6 6 0 0 1-12 0V4Z"/>\n                                            </svg>\n                                        </div>\n                                        <div style="font-size: 12px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;">Desempeño</div>\n                                        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;">Flujo de llaves y arbitraje oficial</div>\n                                    </td>\n\n                                    <!-- Eje 2: Infraestructura Técnica -->\n                                    <td width="33%" style="text-align: center; padding: 18px 12px; border-right: 1px solid rgba(255, 255, 255, 0.06);" valign="top">\n                                        <div style="margin-bottom: 8px;">\n                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">\n                                                <rect x="2" y="6" width="20" height="12" rx="6"/>\n                                                <path d="M6 12h4m-2-2v4"/>\n                                                <circle cx="15" cy="11" r="1" fill="#06b6d4"/>\n                                                <circle cx="18" cy="13" r="1" fill="#06b6d4"/>\n                                            </svg>\n                                        </div>\n                                        <div style="font-size: 12px; font-weight: 800; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.5px;">Hardware</div>\n                                        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;">Consolas, monitores y conectividad</div>\n                                    </td>\n\n                                    <!-- Eje 3: Visión y Mejoras 2027 -->\n                                    <td width="33%" style="text-align: center; padding: 18px 12px;" valign="top">\n                                        <div style="margin-bottom: 8px;">\n                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">\n                                                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>\n                                                <path d="M9 18h6"/>\n                                                <path d="M10 22h4"/>\n                                            </svg>\n                                        </div>\n                                        <div style="font-size: 12px; font-weight: 800; color: #c084fc; text-transform: uppercase; letter-spacing: 0.5px;">SGF 2027</div>\n                                        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;">Nuevos títulos y sugerencias</div>\n                                    </td>\n                                </tr>\n                            </table>\n\n                            <!-- Ficha Informativa de Seguridad y Tiempo -->\n                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 30px 0; background: rgba(255, 255, 255, 0.02); border-left: 3px solid #06b6d4; padding: 12px 16px; border-radius: 0 8px 8px 0;">\n                                <tr>\n                                    <td>\n                                        <div style="font-size: 12px; color: #94a3b8; line-height: 1.6;">\n                                            <span style="display: inline-block; margin-right: 18px;">\n                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 5px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>\n                                                Tiempo estimado: <strong style="color: #ffffff;">1 min</strong>\n                                            </span>\n                                            <span style="display: inline-block;">\n                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 5px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>\n                                                Tratamiento: <strong style="color: #ffffff;">Datos confidenciales y seguros</strong>\n                                            </span>\n                                        </div>\n                                    </td>\n                                </tr>\n                            </table>\n\n                            <!-- Botón de Llamado a la Acción -->\n                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 10px 0 20px 0;">\n                                <tr>\n                                    <td align="center">\n                                        <a href="{{SURVEY_LINK}}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #9333ea 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 800; letter-spacing: 1px; padding: 17px 42px; border-radius: 8px; box-shadow: 0 8px 30px rgba(147, 51, 234, 0.45); text-transform: uppercase;">\n                                            COMPLETAR EVALUACIÓN DE EXPERIENCIA\n                                        </a>\n                                    </td>\n                                </tr>\n                            </table>\n\n                        </td>\n                    </tr>\n\n                    <!-- Firma Institucional -->\n                    <tr>\n                        <td style="padding: 20px 42px 35px 42px; color: #a1a1aa; font-size: 13px; line-height: 1.6; border-top: 1px solid rgba(255, 255, 255, 0.06);">\n                            <p style="margin: 0 0 4px 0; color: #ffffff; font-weight: 700; font-size: 14px;">\n                                Comité Organizador Oficial • SGF 2026\n                            </p>\n                            <p style="margin: 0; color: #94a3b8; font-size: 12px;">\n                                Comité de Estudiantes de Ingeniería Telemática - CEIT<br>\n                                Pontificia Universidad Católica Madre y Maestra - PUCMM\n                            </p>\n                        </td>\n                    </tr>\n\n                    <!-- Footer Oficial con Logos Institucionales -->\n                    <tr>\n                        <td align="center" style="background-color: #06020c; padding: 26px 30px; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 11px; color: #52525b; line-height: 1.6;">\n                            \n                            <!-- Logos PUCMM y CEIT -->\n                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 14px;">\n                                <tr>\n                                    <td style="padding: 0 12px;">\n                                        <img src="https://sgf26-feedback.vercel.app/images/pucmm.png" alt="PUCMM" height="26" style="display: block; opacity: 0.65; border: 0; filter: grayscale(30%);">\n                                    </td>\n                                    <td style="color: rgba(255, 255, 255, 0.2); font-size: 14px;">•</td>\n                                    <td style="padding: 0 12px;">\n                                        <img src="https://sgf26-feedback.vercel.app/images/ceit.png" alt="CEIT" height="26" style="display: block; opacity: 0.65; border: 0; filter: grayscale(30%);">\n                                    </td>\n                                </tr>\n                            </table>\n\n                            <p style="margin: 0 0 4px 0;">\n                                Este mensaje institucional fue enviado a los participantes registrados del Students Gaming Festival 2026.\n                            </p>\n                            <p style="margin: 0; color: #71717a;">\n                                © 2026 Students Gaming Festival. Todos los derechos reservados.<br>\n                                PUCMM, Campus Santiago • República Dominicana.\n                            </p>\n                        </td>\n                    </tr>\n\n                </table>\n\n            </td>\n        </tr>\n    </table>\n\n</body>\n</html>\n';
+  var baseHtml = '<!DOCTYPE html>\n' +
+    '<html lang="es" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">\n' +
+    '<head>\n' +
+    '  <meta charset="UTF-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+    '  <meta name="color-scheme" content="light dark">\n' +
+    '  <meta name="supported-color-schemes" content="light dark">\n' +
+    '  <title>Evaluación de Experiencia - SGF 2026</title>\n' +
+    '  <!--[if mso]>\n' +
+    '  <style type="text/css">\n' +
+    '    body, table, td, p, a { font-family: Segoe UI, Arial, sans-serif !important; }\n' +
+    '  </style>\n' +
+    '  <![endif]-->\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      color-scheme: light dark;\n' +
+    '      supported-color-schemes: light dark;\n' +
+    '    }\n' +
+    '    body {\n' +
+    '      margin: 0; padding: 0;\n' +
+    '      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;\n' +
+    '      -webkit-font-smoothing: antialiased;\n' +
+    '    }\n' +
+    '    .email-wrapper {\n' +
+    '      background-color: #f3f4f6;\n' +
+    '    }\n' +
+    '    .email-container {\n' +
+    '      background-color: #ffffff;\n' +
+    '      border: 1px solid #e5e7eb;\n' +
+    '    }\n' +
+    '    .title-text {\n' +
+    '      color: #111827;\n' +
+    '    }\n' +
+    '    .body-text {\n' +
+    '      color: #374151;\n' +
+    '    }\n' +
+    '    .muted-text {\n' +
+    '      color: #6b7280;\n' +
+    '    }\n' +
+    '    .divider-line {\n' +
+    '      background-color: #e5e7eb;\n' +
+    '    }\n' +
+    '    .footer-section {\n' +
+    '      background-color: #fafafa;\n' +
+    '      border-top: 1px solid #e5e7eb;\n' +
+    '    }\n' +
+    '    .link-alt {\n' +
+    '      color: #6d28d9;\n' +
+    '    }\n' +
+    '\n' +
+    '    /* Modo Oscuro Automático */\n' +
+    '    @media (prefers-color-scheme: dark) {\n' +
+    '      .email-wrapper {\n' +
+    '        background-color: #0f0f12 !important;\n' +
+    '      }\n' +
+    '      .email-container {\n' +
+    '        background-color: #18181c !important;\n' +
+    '        border-color: #27272a !important;\n' +
+    '      }\n' +
+    '      .title-text {\n' +
+    '        color: #ffffff !important;\n' +
+    '      }\n' +
+    '      .body-text {\n' +
+    '        color: #d1d5db !important;\n' +
+    '      }\n' +
+    '      .muted-text {\n' +
+    '        color: #9ca3af !important;\n' +
+    '      }\n' +
+    '      .divider-line {\n' +
+    '        background-color: #27272a !important;\n' +
+    '      }\n' +
+    '      .footer-section {\n' +
+    '        background-color: #141416 !important;\n' +
+    '        border-top-color: #27272a !important;\n' +
+    '      }\n' +
+    '      .link-alt {\n' +
+    '        color: #a78bfa !important;\n' +
+    '      }\n' +
+    '    }\n' +
+    '\n' +
+    '    /* Compatibilidad Outlook Web / Gmail App */\n' +
+    '    [data-ogsc] .email-wrapper { background-color: #0f0f12 !important; }\n' +
+    '    [data-ogsc] .email-container { background-color: #18181c !important; border-color: #27272a !important; }\n' +
+    '    [data-ogsc] .title-text { color: #ffffff !important; }\n' +
+    '    [data-ogsc] .body-text { color: #d1d5db !important; }\n' +
+    '    [data-ogsc] .muted-text { color: #9ca3af !important; }\n' +
+    '    [data-ogsc] .divider-line { background-color: #27272a !important; }\n' +
+    '    [data-ogsc] .footer-section { background-color: #141416 !important; border-top-color: #27272a !important; }\n' +
+    '  </style>\n' +
+    '</head>\n' +
+    '<body class="email-wrapper" style="margin: 0; padding: 0; background-color: #f3f4f6; -webkit-font-smoothing: antialiased;">\n' +
+    '  <div style="display: none; font-size: 1px; color: #f3f4f6; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">\n' +
+    '    Queremos conocer tu opinión sobre el Students Gaming Festival 2026. Te tomará solo 1 minuto.\n' +
+    '  </div>\n' +
+    '\n' +
+    '  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-wrapper" style="background-color: #f3f4f6; padding: 36px 12px;">\n' +
+    '    <tr>\n' +
+    '      <td align="center">\n' +
+    '        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 560px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">\n' +
+    '          \n' +
+    '          <!-- Cabecera Limpia con Logo -->\n' +
+    '          <tr>\n' +
+    '            <td align="center" style="padding: 36px 32px 20px 32px;">\n' +
+    '              <img src="https://sgf26-feedback.vercel.app/images/logo.png" alt="Students Gaming Festival 2026" width="130" style="display: block; max-width: 130px; height: auto; margin: 0 auto 16px auto; border: 0;">\n' +
+    '              <h1 class="title-text" style="margin: 0; font-size: 20px; font-weight: 700; color: #111827; letter-spacing: -0.3px; line-height: 1.3;">\n' +
+    '                Evaluación de Experiencia\n' +
+    '              </h1>\n' +
+    '              <p class="muted-text" style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">\n' +
+    '                Students Gaming Festival 2026 • CEIT & PUCMM\n' +
+    '              </p>\n' +
+    '            </td>\n' +
+    '          </tr>\n' +
+    '\n' +
+    '          <!-- Línea Divisoria -->\n' +
+    '          <tr>\n' +
+    '            <td style="padding: 0 32px;">\n' +
+    '              <div class="divider-line" style="height: 1px; background-color: #e5e7eb;"></div>\n' +
+    '            </td>\n' +
+    '          </tr>\n' +
+    '\n' +
+    '          <!-- Cuerpo del Mensaje -->\n' +
+    '          <tr>\n' +
+    '            <td class="body-text" style="padding: 28px 32px 24px 32px; font-size: 15px; line-height: 1.65; color: #374151;">\n' +
+    '              <p style="margin: 0 0 16px 0;">\n' +
+    '                Hola <strong style="color: #6d28d9;">{{GamerTag}}</strong>,\n' +
+    '              </p>\n' +
+    '              <p style="margin: 0 0 16px 0;">\n' +
+    '                Muchas gracias por haber participado en el <strong>Students Gaming Festival 2026</strong>. Tu presencia y espíritu competitivo fueron fundamentales para hacer posible esta edición.\n' +
+    '              </p>\n' +
+    '              <p style="margin: 0 0 16px 0;">\n' +
+    '                Queremos conocer tu opinión sobre la puntualidad, los setups, el arbitraje y la organización general del evento. Tus respuestas nos servirán de guía directa para mejorar la experiencia del <strong>SGF 2027</strong>.\n' +
+    '              </p>\n' +
+    '              <p class="muted-text" style="margin: 0 0 24px 0; font-size: 14px; color: #6b7280;">\n' +
+    '                La encuesta es breve y te tomará aproximadamente <strong>1 minuto</strong>.\n' +
+    '              </p>\n' +
+    '\n' +
+    '              <!-- Botón Principal -->\n' +
+    '              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 8px 0 24px 0;">\n' +
+    '                <tr>\n' +
+    '                  <td align="center">\n' +
+    '                    <a href="{{SURVEY_LINK}}" target="_blank" style="display: inline-block; background-color: #6d28d9; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; text-align: center;">\n' +
+    '                      Completar encuesta de experiencia\n' +
+    '                    </a>\n' +
+    '                  </td>\n' +
+    '                </tr>\n' +
+    '              </table>\n' +
+    '\n' +
+    '              <!-- Enlace de Respaldo -->\n' +
+    '              <p class="muted-text" style="margin: 0 0 28px 0; font-size: 12px; color: #6b7280; line-height: 1.5; word-break: break-all;">\n' +
+    '                Si el botón no abre correctamente, puedes acceder directamente pegando este enlace en tu navegador:<br>\n' +
+    '                <a href="{{SURVEY_LINK}}" target="_blank" class="link-alt" style="color: #6d28d9; text-decoration: underline;">{{SURVEY_LINK}}</a>\n' +
+    '              </p>\n' +
+    '\n' +
+    '              <!-- Despedida Institucional -->\n' +
+    '              <p class="muted-text" style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.5;">\n' +
+    '                Atentamente,<br>\n' +
+    '                <strong class="title-text" style="color: #111827;">Comité Organizador Oficial SGF 2026</strong><br>\n' +
+    '                Comité de Estudiantes de Ingeniería Telemática (CEIT)<br>\n' +
+    '                Pontificia Universidad Católica Madre y Maestra (PUCMM)\n' +
+    '              </p>\n' +
+    '            </td>\n' +
+    '          </tr>\n' +
+    '\n' +
+    '          <!-- Footer Institucional -->\n' +
+    '          <tr>\n' +
+    '            <td align="center" class="footer-section" style="padding: 24px 32px; border-top: 1px solid #e5e7eb; background-color: #fafafa;">\n' +
+    '              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">\n' +
+    '                <tr>\n' +
+    '                  <td style="padding: 0 10px;">\n' +
+    '                    <img src="https://sgf26-feedback.vercel.app/images/pucmm.png" alt="PUCMM" height="22" style="display: block; opacity: 0.75; border: 0;">\n' +
+    '                  </td>\n' +
+    '                  <td class="muted-text" style="color: #9ca3af; font-size: 12px;">•</td>\n' +
+    '                  <td style="padding: 0 10px;">\n' +
+    '                    <img src="https://sgf26-feedback.vercel.app/images/ceit.png" alt="CEIT" height="22" style="display: block; opacity: 0.75; border: 0;">\n' +
+    '                  </td>\n' +
+    '                </tr>\n' +
+    '              </table>\n' +
+    '              <p class="muted-text" style="margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.4;">\n' +
+    '                Students Gaming Festival 2026 • PUCMM, Campus Santiago\n' +
+    '              </p>\n' +
+    '            </td>\n' +
+    '          </tr>\n' +
+    '\n' +
+    '        </table>\n' +
+    '      </td>\n' +
+    '    </tr>\n' +
+    '  </table>\n' +
+    '</body>\n' +
+    '</html>';
 
   var resultado = baseHtml
     .split("{{SURVEY_LINK}}").join(urlFinal)
-    .split("https://sgf26-feedback.vercel.app/?gamertag={{GamerTag}}&email={{Email}}").join(urlFinal)
     .split("{{GamerTag}}").join(gamertag)
     .split("{{Email}}").join(email);
 
