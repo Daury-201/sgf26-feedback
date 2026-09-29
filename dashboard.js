@@ -344,7 +344,7 @@ function renderKpis() {
     const elCsatPct = document.getElementById("kpi-csat-percent");
     const elCsatBadge = document.getElementById("kpi-csat-badge");
     if (elCsat) elCsat.textContent = avgCsat;
-    if (elCsatPct) elCsatPct.textContent = `${positivePct}% de satisfacción positiva (4-5 ⭐)`;
+    if (elCsatPct) elCsatPct.textContent = `${positivePct}% de satisfacción positiva`;
     if (elCsatBadge) {
         if (avgCsat >= 4.5) {
             elCsatBadge.textContent = "¡LEGENDARIO!";
@@ -535,7 +535,7 @@ function renderCharts() {
             data: {
                 labels: ["Puntualidad", "Hardware y Setups", "Staff y Jueces", "Ambiente y Audio"],
                 datasets: [{
-                    label: "Evaluación Operativa (1-5)",
+                    label: "Evaluación Operativa",
                     data: [avgP, avgH, avgS, avgA],
                     backgroundColor: "rgba(6, 182, 212, 0.25)",
                     borderColor: "#06b6d4",
@@ -633,9 +633,9 @@ function renderCharts() {
             type: "pie",
             data: {
                 labels: [
-                    `Promotores (9-10): ${npsProm}`,
-                    `Pasivos (7-8): ${npsPass}`,
-                    `Detractores (0-6): ${npsDet}`
+                    `Promotores: ${npsProm}`,
+                    `Pasivos: ${npsPass}`,
+                    `Detractores: ${npsDet}`
                 ],
                 datasets: [{
                     data: (npsProm + npsPass + npsDet > 0) ? [npsProm, npsPass, npsDet] : [0, 0, 1],
@@ -756,9 +756,9 @@ function renderTable() {
         const npsVal = parseInt(r.nps, 10);
         let npsBadge = `<span class="nps-badge nps-passive">N/A</span>`;
         if (!isNaN(npsVal)) {
-            if (npsVal >= 9) npsBadge = `<span class="nps-badge nps-promoter">${npsVal} (Promotor)</span>`;
-            else if (npsVal >= 7) npsBadge = `<span class="nps-badge nps-passive">${npsVal} (Pasivo)</span>`;
-            else npsBadge = `<span class="nps-badge nps-detractor">${npsVal} (Detractor)</span>`;
+            if (npsVal >= 9) npsBadge = `<span class="nps-badge nps-promoter">${npsVal} • Promotor</span>`;
+            else if (npsVal >= 7) npsBadge = `<span class="nps-badge nps-passive">${npsVal} • Pasivo</span>`;
+            else npsBadge = `<span class="nps-badge nps-detractor">${npsVal} • Detractor</span>`;
         }
 
         const comments = [r.likedMost, r.suggestions].filter(Boolean).join(" • ");
