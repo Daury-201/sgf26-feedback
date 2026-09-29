@@ -32,15 +32,102 @@ let chartTournaments = null;
 let chartNps = null;
 
 // =========================================================================
-// 1. INICIALIZACIÓN DIRECTA DEL DASHBOARD (ACCESO PÚBLICO SIN LOGIN)
+// 1. CONTROL DE ACCESO Y AUTENTICACIÓN (LOGIN GATE)
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
-    const dashboardApp = document.getElementById("dashboard-app");
-    if (dashboardApp) {
-        dashboardApp.style.display = "block";
-    }
-    initDashboard();
+    initAuth();
 });
+
+function initAuth() {
+    const isAuth = sessionStorage.getItem(AUTH_STORAGE_KEY) === "true" || localStorage.getItem(AUTH_STORAGE_KEY) === "true";
+    const loginScreen = document.getElementById("login-screen");
+    const dashboardApp = document.getElementById("dashboard-app");
+
+    if (isAuth) {
+        if (loginScreen) loginScreen.style.display = "none";
+        if (dashboardApp) dashboardApp.style.display = "block";
+        initDashboard();
+    } else {
+        if (loginScreen) loginScreen.style.display = "flex";
+        if (dashboardApp) dashboardApp.style.display = "none";
+        setupLoginForm();
+    }
+
+    // Botón de alternar visibilidad de contraseña
+    const btnTogglePass = document.getElementById("btn-toggle-password");
+    const passInput = document.getElementById("admin-pass");
+    const passIcon = document.getElementById("toggle-pass-icon");
+    if (btnTogglePass && passInput && passIcon) {
+        btnTogglePass.addEventListener("click", () => {
+            if (passInput.type === "password") {
+                passInput.type = "text";
+                passIcon.className = "fa-regular fa-eye-slash";
+            } else {
+                passInput.type = "password";
+                passIcon.className = "fa-regular fa-eye";
+            }
+        });
+    }
+
+    // Botón de Logout
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            window.location.reload();
+        });
+    }
+}
+
+function setupLoginForm() {
+    const form = document.getElementById("login-form");
+    const userInput = document.getElementById("admin-user");
+    const passInput = document.getElementById("admin-pass");
+    const rememberChk = document.getElementById("chk-remember-session");
+    const errorMsg = document.getElementById("login-error-msg");
+    const errorText = document.getElementById("login-error-text");
+
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const user = (userInput ? userInput.value.trim().toLowerCase() : "");
+        const pass = (passInput ? passInput.value.trim().toLowerCase() : "");
+
+        const isValidUser = VALID_USERS.includes(user);
+        const isValidPass = VALID_PASSWORDS.includes(pass);
+
+        if (isValidUser && isValidPass) {
+            if (errorMsg) errorMsg.classList.remove("visible");
+
+            if (rememberChk && rememberChk.checked) {
+                localStorage.setItem(AUTH_STORAGE_KEY, "true");
+            } else {
+                sessionStorage.setItem(AUTH_STORAGE_KEY, "true");
+            }
+
+            const loginScreen = document.getElementById("login-screen");
+            const dashboardApp = document.getElementById("dashboard-app");
+            if (loginScreen) loginScreen.style.display = "none";
+            if (dashboardApp) {
+                dashboardApp.style.display = "block";
+                dashboardApp.style.animation = "loginFadeIn 0.4s ease-out";
+            }
+
+            initDashboard();
+        } else {
+            if (errorMsg) {
+                errorMsg.classList.add("visible");
+                if (errorText) errorText.textContent = "Credenciales incorrectas. Verifica usuario o contraseña.";
+            }
+            if (passInput) {
+                passInput.value = "";
+                passInput.focus();
+            }
+        }
+    });
+}
 
 // =========================================================================
 // 2. INICIALIZACIÓN DEL DASHBOARD Y CONTROLES
