@@ -5,12 +5,12 @@
  *
  * ============================================================================
  * CORREO CONFIGURADO PARA TU PRUEBA:
- * dauryrodriguez2005@gmail.com
+ * rafaeldario1961@gmail.com
  * ============================================================================
  */
 
-var MI_CORREO_VALIDACION = "dauryrodriguez2005@gmail.com";
-var MI_GAMERTAG = "Daury (Organizador)";
+var MI_CORREO_VALIDACION = "rafaeldario1961@gmail.com";
+var MI_GAMERTAG = "Rafael";
 
 // ============================================================================
 // 1. FUNCIÓN PRINCIPAL DE PRUEBA (EJECUCIÓN DIRECTA)
