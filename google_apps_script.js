@@ -7,8 +7,8 @@
  * CONFIGURACIÓN DE TU CORREO DE VALIDACIÓN:
  * ============================================================================
  */
-var MI_CORREO_VALIDACION = "tu_correo@gmail.com"; // <-- ESCRIBE AQUÍ TU CORREO PARA PROBAR
-var MI_GAMERTAG = "Daury (Organizador)";         // <-- TU NOMBRE O GAMERTAG
+var MI_CORREO_VALIDACION = "dauryrodriguez2005@gmail.com"; // Correo oficial de prueba
+var MI_GAMERTAG = "Daury (Organizador)";
 
 /**
  * ============================================================================
