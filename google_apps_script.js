@@ -261,7 +261,7 @@ function enviarCorreoIndividual(destinatario, gamertag) {
   var linkEncuesta = "https://sgf26-feedback.vercel.app/?gamertag=" + encodeURIComponent(tag) + "&email=" + encodeURIComponent(destinatario);
   var htmlTemplate = obtenerPlantillaEmailHtml(tag, destinatario, linkEncuesta);
 
-  var asunto = "🎮 Tu opinión sobre el Students Gaming Festival 2026 • Evaluación Oficial CEIT";
+  var asunto = "Tu opinión sobre el Students Gaming Festival 2026 - Evaluación Oficial CEIT";
 
   var textoPlano = "Estimado/a participante " + tag + ":\n\n" +
     "En nombre del Comité Organizador del Students Gaming Festival 2026, el CEIT y la PUCMM, agradecemos tu destacada participación.\n\n" +
@@ -269,7 +269,7 @@ function enviarCorreoIndividual(destinatario, gamertag) {
     linkEncuesta + "\n\n" +
     "Tu evaluación define los estándares, setups y juegos del SGF 2027.\n" +
     "Tiempo estimado: 1 minuto.\n\n" +
-    "Comité Organizador Oficial SGF 2026 • CEIT & PUCMM";
+    "Comité Organizador Oficial SGF 2026 - CEIT y PUCMM";
 
   try {
     GmailApp.sendEmail(destinatario, asunto, textoPlano, {
