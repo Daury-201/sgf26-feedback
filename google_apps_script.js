@@ -206,8 +206,77 @@ function onOpen() {
     .createMenu("🎮 SGF 2026 Feedback")
     .addItem("✉️ Enviar Correo de Prueba a Mí...", "menuEnviarPrueba")
     .addSeparator()
+    .addItem("🗑️ Vaciar y Reiniciar Hoja (Listo para Pruebas)", "reiniciarHojaDesdeCero")
+    .addSeparator()
     .addItem("📊 Consultar Cuota Diaria Restante", "menuConsultarCuota")
     .addToUi();
+}
+
+/**
+ * Vacía todas las respuestas recibidas en la hoja, elimina 'Hoja 1' si existe,
+ * y coloca los 14 encabezados oficiales actualizados (sin ID Ticket y con Rifas).
+ * Puedes ejecutarla directamente desde el botón 'Ejecutar' o desde el menú de la hoja.
+ */
+function reiniciarHojaDesdeCero() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. Obtener o crear pestaña 'Respuestas'
+  var sheet = ss.getSheetByName("Respuestas");
+  if (!sheet) {
+    sheet = ss.insertSheet("Respuestas", 0);
+  }
+  
+  // 2. Limpiar todo el contenido anterior
+  sheet.clear();
+  
+  // 3. Encabezados oficiales limpios y actualizados
+  var headers = [
+    "Fecha Registro",
+    "GamerTag",
+    "Email",
+    "Torneo",
+    "Calificación General",
+    "Puntualidad",
+    "Hardware y Setups",
+    "Staff y Jueces",
+    "Ambiente y Audio",
+    "Gestión de Rifas (1-10)",
+    "NPS (0-10)",
+    "Lo que más gustó",
+    "Sugerencias y 2027",
+    "Navegador"
+  ];
+  
+  sheet.appendRow(headers);
+  var headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setBackground("#16082b");
+  headerRange.setFontColor("#a855f7");
+  headerRange.setFontWeight("bold");
+  sheet.setFrozenRows(1);
+  
+  // 4. Si existe 'Hoja 1' vacía, eliminarla para que quede solo una pestaña limpia
+  var hoja1 = ss.getSheetByName("Hoja 1");
+  if (hoja1 && ss.getSheets().length > 1) {
+    try {
+      ss.deleteSheet(hoja1);
+    } catch (e) {
+      Logger.log("Aviso al eliminar Hoja 1: " + e.toString());
+    }
+  }
+  
+  ss.setActiveSheet(sheet);
+  Logger.log("✅ Hoja 'Respuestas' reiniciada en blanco con los 14 encabezados oficiales.");
+
+  try {
+    var ui = SpreadsheetApp.getUi();
+    ui.alert(
+      "✅ Hoja Reiniciada",
+      "Se han vaciado todas las respuestas de prueba.\nLos encabezados oficiales quedaron actualizados (sin ID Ticket y con Rifas) en la pestaña 'Respuestas'.\n\n¡Listo para tus pruebas finales!",
+      ui.ButtonSet.OK
+    );
+  } catch (e) {
+    // Si se ejecutó desde el editor de código sin UI
+  }
 }
 
 function menuEnviarPrueba() {
