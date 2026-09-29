@@ -25,6 +25,10 @@ let currentTab = "liked";
 const TABLE_PAGE_SIZE = 5;
 let currentTablePage = 1;
 
+// Paginación de Opiniones / Muro de Feedback (6 testimonios por página)
+const QUOTES_PAGE_SIZE = 6;
+let currentQuotesPage = 1;
+
 // Instancias de Chart.js
 let chartStars = null;
 let chartRadar = null;
@@ -294,6 +298,7 @@ async function loadDashboardData(isBackground = false) {
 function applyFilters(resetPage = true) {
     if (resetPage) {
         currentTablePage = 1;
+        currentQuotesPage = 1;
     }
     const tournamentVal = (document.getElementById("filter-tournament")?.value || "ALL").toLowerCase();
     const ratingVal = document.getElementById("filter-rating")?.value || "ALL";
@@ -759,10 +764,11 @@ function renderCharts() {
 }
 
 // =========================================================================
-// 7. RENDER DE TESTIMONIOS Y SUGERENCIAS
+// 7. RENDER DE TESTIMONIOS Y SUGERENCIAS (CON PAGINACIÓN DE 6 REGISTROS)
 // =========================================================================
 function switchQuotesTab(tab) {
     currentTab = tab;
+    currentQuotesPage = 1; // Al cambiar pestaña se vuelve a la página 1
     document.querySelectorAll(".pill-btn").forEach(btn => {
         if (btn.getAttribute("data-tab") === tab) btn.classList.add("active");
         else btn.classList.remove("active");
@@ -773,6 +779,18 @@ window.switchQuotesTab = switchQuotesTab;
 
 function renderQuotes() {
     const container = document.getElementById("quotes-container");
+    const paginationEl = document.getElementById("quotes-pagination");
+    const paginationInfo = document.getElementById("quotes-pagination-info");
+    const paginationNumbers = document.getElementById("quotes-pagination-numbers");
+    const btnPrev = document.getElementById("btn-quotes-prev");
+    const btnNext = document.getElementById("btn-quotes-next");
+
+    // Mini controles en el encabezado
+    const miniNav = document.getElementById("quotes-mini-nav");
+    const miniIndicator = document.getElementById("quotes-mini-indicator");
+    const miniBtnPrev = document.getElementById("btn-quotes-prev-mini");
+    const miniBtnNext = document.getElementById("btn-quotes-next-mini");
+
     if (!container) return;
 
     const itemsWithText = filteredResponses.filter(r => {
@@ -780,7 +798,9 @@ function renderQuotes() {
         return r.suggestions && r.suggestions.trim().length > 1;
     });
 
-    if (itemsWithText.length === 0) {
+    const totalQuotes = itemsWithText.length;
+
+    if (totalQuotes === 0) {
         container.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-dim);">
                 <i class="fa-regular fa-comment-dots" style="font-size: 2.4rem; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
@@ -788,10 +808,52 @@ function renderQuotes() {
                 <p style="font-size: 0.8rem;">Las opiniones que los participantes envíen en la encuesta se mostrarán aquí de inmediato.</p>
             </div>
         `;
+        if (paginationEl) paginationEl.style.display = "none";
+        if (miniNav) miniNav.style.display = "none";
         return;
     }
 
-    container.innerHTML = itemsWithText.slice(0, 12).map(r => {
+    const totalPages = Math.ceil(totalQuotes / QUOTES_PAGE_SIZE) || 1;
+
+    if (currentQuotesPage > totalPages) currentQuotesPage = totalPages;
+    if (currentQuotesPage < 1) currentQuotesPage = 1;
+
+    // Solo se muestra navegación si se superan los 6 testimonios (más de 1 página)
+    const hasMultiplePages = totalQuotes > QUOTES_PAGE_SIZE;
+    if (paginationEl) paginationEl.style.display = hasMultiplePages ? "flex" : "none";
+    if (miniNav) miniNav.style.display = hasMultiplePages ? "flex" : "none";
+
+    const startIdx = (currentQuotesPage - 1) * QUOTES_PAGE_SIZE;
+    const endIdx = Math.min(startIdx + QUOTES_PAGE_SIZE, totalQuotes);
+    const pageQuotes = itemsWithText.slice(startIdx, endIdx);
+
+    const labelCategory = currentTab === "liked" ? "lo que más gustó" : "sugerencias 2027";
+
+    if (paginationInfo) {
+        paginationInfo.innerHTML = `Mostrando <strong>${startIdx + 1} - ${endIdx}</strong> de <strong>${totalQuotes}</strong> opiniones (${labelCategory} • Pág. ${currentQuotesPage} de ${totalPages})`;
+    }
+
+    if (miniIndicator) {
+        miniIndicator.textContent = `${currentQuotesPage} / ${totalPages}`;
+    }
+
+    const isFirstPage = currentQuotesPage <= 1;
+    const isLastPage = currentQuotesPage >= totalPages;
+
+    if (btnPrev) btnPrev.disabled = isFirstPage;
+    if (btnNext) btnNext.disabled = isLastPage;
+    if (miniBtnPrev) miniBtnPrev.disabled = isFirstPage;
+    if (miniBtnNext) miniBtnNext.disabled = isLastPage;
+
+    if (paginationNumbers) {
+        let pagesHtml = "";
+        for (let p = 1; p <= totalPages; p++) {
+            pagesHtml += `<button type="button" class="page-num-btn ${p === currentQuotesPage ? 'active' : ''}" onclick="goToQuotesPage(${p})">${p}</button>`;
+        }
+        paginationNumbers.innerHTML = pagesHtml;
+    }
+
+    container.innerHTML = pageQuotes.map(r => {
         const text = currentTab === "liked" ? r.likedMost : r.suggestions;
         const tag = currentTab === "liked" ? "Destacado del Festival" : "Sugerencia SGF 2027";
         return `
@@ -806,6 +868,32 @@ function renderQuotes() {
         `;
     }).join("");
 }
+
+// Handlers de Paginación de Opiniones
+window.changeQuotesPage = function(delta) {
+    const itemsWithText = filteredResponses.filter(r => {
+        if (currentTab === "liked") return r.likedMost && r.likedMost.trim().length > 1;
+        return r.suggestions && r.suggestions.trim().length > 1;
+    });
+    const totalPages = Math.ceil(itemsWithText.length / QUOTES_PAGE_SIZE) || 1;
+    const targetPage = currentQuotesPage + delta;
+    if (targetPage >= 1 && targetPage <= totalPages) {
+        currentQuotesPage = targetPage;
+        renderQuotes();
+    }
+};
+
+window.goToQuotesPage = function(page) {
+    const itemsWithText = filteredResponses.filter(r => {
+        if (currentTab === "liked") return r.likedMost && r.likedMost.trim().length > 1;
+        return r.suggestions && r.suggestions.trim().length > 1;
+    });
+    const totalPages = Math.ceil(itemsWithText.length / QUOTES_PAGE_SIZE) || 1;
+    if (page >= 1 && page <= totalPages) {
+        currentQuotesPage = page;
+        renderQuotes();
+    }
+};
 
 // =========================================================================
 // 8. RENDER DE TABLA DE RESPUESTAS (CON PAGINACIÓN DE 5 REGISTROS)

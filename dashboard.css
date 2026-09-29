@@ -558,6 +558,62 @@ body.dashboard-body {
     box-shadow: 0 0 10px var(--primary-purple-glow);
 }
 
+.quotes-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.quotes-mini-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 3px 6px;
+}
+
+.quotes-mini-btn {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: var(--text-light);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.quotes-mini-btn:hover:not(:disabled) {
+    background: rgba(168, 85, 247, 0.35);
+    border-color: var(--primary-violet-light);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.quotes-mini-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.quotes-mini-indicator {
+    font-size: 0.74rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--primary-violet-light);
+    padding: 0 4px;
+    letter-spacing: 0.5px;
+    min-width: 38px;
+    text-align: center;
+}
+
 .quotes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -572,6 +628,23 @@ body.dashboard-body {
     transition: transform 0.2s, border-color 0.2s;
     position: relative;
     overflow: hidden;
+    animation: quoteCardFade 0.25s ease-out;
+}
+
+@keyframes quoteCardFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.quotes-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(168, 85, 247, 0.2);
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .quote-card:hover {

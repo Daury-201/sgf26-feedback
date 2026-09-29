@@ -20,7 +20,7 @@
     <!-- Chart.js para visualización de métricas avanzadas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <link rel="stylesheet" href="dashboard.css?v=5.0">
+    <link rel="stylesheet" href="dashboard.css?v=6.0">
 </head>
 <body class="dashboard-body">
 
@@ -320,18 +320,47 @@
             <section class="feedback-wall-section">
                 <div class="section-title-row">
                     <h2><i class="fa-solid fa-comments"></i> Muro de Opiniones y Visión 2027</h2>
-                    <div class="tab-pills">
-                        <button class="pill-btn active" data-tab="liked" onclick="switchQuotesTab('liked')">
-                            <i class="fa-solid fa-heart"></i> Lo que Más Gustó
-                        </button>
-                        <button class="pill-btn" data-tab="suggestions" onclick="switchQuotesTab('suggestions')">
-                            <i class="fa-solid fa-lightbulb"></i> Ideas y Sugerencias 2027
-                        </button>
+                    <div class="quotes-header-actions">
+                        <div class="tab-pills">
+                            <button class="pill-btn active" data-tab="liked" onclick="switchQuotesTab('liked')">
+                                <i class="fa-solid fa-heart"></i> Lo que Más Gustó
+                            </button>
+                            <button class="pill-btn" data-tab="suggestions" onclick="switchQuotesTab('suggestions')">
+                                <i class="fa-solid fa-lightbulb"></i> Ideas y Sugerencias 2027
+                            </button>
+                        </div>
+                        <div class="quotes-mini-nav" id="quotes-mini-nav" style="display: none;">
+                            <button type="button" class="quotes-mini-btn" id="btn-quotes-prev-mini" onclick="changeQuotesPage(-1)" title="Página anterior (Izquierda)">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span class="quotes-mini-indicator" id="quotes-mini-indicator">1 / 1</span>
+                            <button type="button" class="quotes-mini-btn" id="btn-quotes-next-mini" onclick="changeQuotesPage(1)" title="Página siguiente (Derecha)">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="quotes-grid" id="quotes-container">
                     <!-- Se inyectan dinámicamente con JavaScript -->
+                </div>
+
+                <!-- Controles de Paginación de Opiniones (6 testimonios por página) -->
+                <div class="quotes-pagination" id="quotes-pagination" style="display: none;">
+                    <div class="pagination-info" id="quotes-pagination-info">
+                        Cargando opiniones...
+                    </div>
+                    <div class="pagination-controls">
+                        <button type="button" class="page-nav-btn" id="btn-quotes-prev" onclick="changeQuotesPage(-1)" title="Página anterior (Izquierda)">
+                            <i class="fa-solid fa-chevron-left"></i> Anterior
+                        </button>
+                        <div class="page-numbers" id="quotes-pagination-numbers">
+                            <!-- Botones generados dinámicamente -->
+                        </div>
+                        <button type="button" class="page-nav-btn" id="btn-quotes-next" onclick="changeQuotesPage(1)" title="Página siguiente (Derecha)">
+                            Siguiente <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -400,6 +429,6 @@
         </main>
     </div>
 
-    <script src="dashboard.js?v=6.0"></script>
+    <script src="dashboard.js?v=7.0"></script>
 </body>
 </html>
