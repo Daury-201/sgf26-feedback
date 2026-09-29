@@ -8,7 +8,7 @@
  * 4. Interactive Charts (Chart.js), Filtering, and CSV Export
  */
 
-const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx7ULbkqVNBEypvSbFxjjpsEnoCN_6fXkTQGzEzXtyu_9lzyMAeRPzq6ttSbxA8fd-jOg/exec";
+const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx3ZibG7MEHXeKYcOrDl72J0E73wqJ1WDWJKI7l-E5b27n0fmcETnK5Y-dhuXv8kf38/exec";
 const LOCAL_STORAGE_SUBMISSIONS_KEY = "sgf26_feedback_submissions_v1";
 const AUTH_STORAGE_KEY = "sgf26_admin_authenticated";
 
