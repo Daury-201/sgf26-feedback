@@ -20,7 +20,85 @@
     <!-- Canvas Confetti para celebración de envío -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=3.5">
+    <link rel="stylesheet" href="style.css?v=4.0">
+    <script>
+        window.selectGameCard = function(el) {
+            document.querySelectorAll('.game-card-option').forEach(function(c) {
+                c.classList.remove('selected');
+            });
+            el.classList.add('selected');
+            var gameName = el.getAttribute('data-game-name') || '';
+            var inp = document.getElementById('inp-selected-game');
+            if (inp) inp.value = gameName;
+            var err = document.getElementById('err-game');
+            if (err) err.classList.remove('visible');
+            if (typeof updateProgress === 'function') updateProgress();
+        };
+
+        window.selectStar = function(val) {
+            selectedStarValue = parseInt(val, 10);
+            var inp = document.getElementById('inp-overall-rating');
+            if (inp) inp.value = selectedStarValue;
+            if (typeof renderStars === 'function') renderStars(selectedStarValue, true);
+            var err = document.getElementById('err-overall');
+            if (err) err.classList.remove('visible');
+            var badge = document.getElementById('rating-feedback-label');
+            if (badge && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[selectedStarValue]) {
+                badge.textContent = RATING_TEXTS[selectedStarValue];
+                badge.classList.add('active');
+            }
+            if (typeof updateProgress === 'function') updateProgress();
+        };
+
+        window.hoverStar = function(val) {
+            if (typeof renderStars === 'function') renderStars(parseInt(val, 10), false);
+            var badge = document.getElementById('rating-feedback-label');
+            if (badge && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[val]) {
+                badge.textContent = RATING_TEXTS[val];
+                badge.classList.add('active');
+            }
+        };
+
+        window.leaveStar = function() {
+            if (typeof renderStars === 'function') renderStars(selectedStarValue || 0, false);
+            var badge = document.getElementById('rating-feedback-label');
+            if (badge) {
+                if (selectedStarValue > 0 && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[selectedStarValue]) {
+                    badge.textContent = RATING_TEXTS[selectedStarValue];
+                    badge.classList.add('active');
+                } else {
+                    badge.textContent = 'Selecciona de 1 a 5 estrellas';
+                    badge.classList.remove('active');
+                }
+            }
+        };
+
+        window.selectMetric = function(btn, metricName, val) {
+            var container = btn.closest('.segmented-rating');
+            if (container) {
+                container.querySelectorAll('button').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+            }
+            btn.classList.add('active');
+            var hiddenInp = document.getElementById('inp-metric-' + metricName);
+            if (hiddenInp) hiddenInp.value = val;
+            if (typeof updateProgress === 'function') updateProgress();
+        };
+
+        window.selectNps = function(btn, val) {
+            var bar = document.getElementById('nps-bar');
+            if (bar) {
+                bar.querySelectorAll('button').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+            }
+            btn.classList.add('active');
+            var inp = document.getElementById('inp-nps');
+            if (inp) inp.value = val;
+            if (typeof updateProgress === 'function') updateProgress();
+        };
+    </script>
 </head>
 <body>
 
@@ -476,6 +554,6 @@
     <!-- Toast Notification Container -->
     <div id="survey-toast" class="survey-toast"></div>
 
-    <script src="app.js?v=3.5"></script>
+    <script src="app.js?v=4.0"></script>
 </body>
 </html>
