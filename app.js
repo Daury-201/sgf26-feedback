@@ -1,0 +1,594 @@
+/**
+ * Students Gaming Festival 2026 (SGF 2026)
+ * Encuesta Oficial de Experiencia y Satisfacción (Feedback Microsite)
+ * 
+ * Lógica interactiva del formulario, cálculo de progreso en tiempo real,
+ * animación de estrellas y NPS, validaciones y envío (Google Sheets / LocalStorage).
+ */
+
+// =========================================================================
+// CONFIGURACIÓN DE CONEXIÓN (GOOGLE SHEETS WEBHOOK)
+// =========================================================================
+// Pega aquí la URL de tu Google Apps Script implementado como Web App.
+// Si está vacío, el formulario guardará automáticamente en LocalStorage para pruebas.
+const GOOGLE_SHEETS_WEBHOOK_URL = ""; 
+
+const LOCAL_STORAGE_KEY = "sgf26_feedback_submissions_v1";
+
+// =========================================================================
+// ESTADO Y REFERENCIAS DEL DOM
+// =========================================================================
+const form = document.getElementById("feedback-form");
+const successView = document.getElementById("success-view");
+const btnSubmit = document.getElementById("btn-submit");
+const progressFill = document.getElementById("progress-fill");
+const progressPercentText = document.getElementById("progress-percent-text");
+const progressStepText = document.getElementById("progress-step-text");
+const toastEl = document.getElementById("survey-toast");
+
+// Campos de entrada
+const inpGamertag = document.getElementById("inp-gamertag");
+const inpEmail = document.getElementById("inp-email");
+const inpSelectedGame = document.getElementById("inp-selected-game");
+const inpOverallRating = document.getElementById("inp-overall-rating");
+const inpNps = document.getElementById("inp-nps");
+const inpLikedMost = document.getElementById("inp-liked-most");
+const inpSuggestions = document.getElementById("inp-suggestions");
+
+// Rating feedback badge y textos
+const ratingBadge = document.getElementById("rating-feedback-label");
+const starButtons = document.querySelectorAll("#stars-overall .star-btn");
+const gameCardOptions = document.querySelectorAll(".game-card-option");
+const segmentedButtons = document.querySelectorAll(".segmented-rating button");
+const npsButtons = document.querySelectorAll("#nps-bar button");
+
+const RATING_TEXTS = {
+    1: "💀 1/5 - Deficiente (Pudo ser mucho mejor)",
+    2: "⚠️ 2/5 - Regular (Aspectos clave a pulir)",
+    3: "🎮 3/5 - Bueno (Buena experiencia competitiva)",
+    4: "🔥 4/5 - ¡Muy Bueno! (Gran nivel y organización)",
+    5: "👑 5/5 - ¡LEGENDARIO! (Experiencia inolvidable)"
+};
+
+let currentHoveredStar = 0;
+let selectedStarValue = 0;
+
+// =========================================================================
+// INICIALIZACIÓN
+// =========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    initUrlParams();
+    initGameSelector();
+    initStarRating();
+    initSegmentedRatings();
+    initNpsBar();
+    initInputListeners();
+    initActionButtons();
+    updateProgress();
+});
+
+// =========================================================================
+// 1. AUTO-RELLENO POR PARÁMETROS URL (?email=...&gamertag=...&game=...)
+// =========================================================================
+function initUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Gamertag / Alias
+    const tag = params.get("gamertag") || params.get("tag") || params.get("alias") || params.get("player");
+    if (tag && inpGamertag) {
+        inpGamertag.value = decodeURIComponent(tag.trim());
+    }
+
+    // Email
+    const email = params.get("email") || params.get("correo");
+    if (email && inpEmail) {
+        inpEmail.value = decodeURIComponent(email.trim());
+    }
+
+    // Torneo / Juego
+    const game = params.get("game") || params.get("torneo");
+    if (game) {
+        const normalizedGame = game.toLowerCase().trim();
+        const targetOption = Array.from(gameCardOptions).find(opt => {
+            const key = (opt.getAttribute("data-game-key") || "").toLowerCase();
+            return key === normalizedGame || key.includes(normalizedGame) || normalizedGame.includes(key);
+        });
+
+        if (targetOption) {
+            selectGameOption(targetOption);
+        }
+    }
+}
+
+// =========================================================================
+// 2. SELECTOR DE JUEGOS / TORNEOS
+// =========================================================================
+function initGameSelector() {
+    gameCardOptions.forEach(card => {
+        card.addEventListener("click", () => {
+            selectGameOption(card);
+            clearError("err-game");
+            updateProgress();
+        });
+    });
+}
+
+function selectGameOption(targetCard) {
+    gameCardOptions.forEach(c => c.classList.remove("selected"));
+    targetCard.classList.add("selected");
+    const gameName = targetCard.getAttribute("data-game-name") || "";
+    inpSelectedGame.value = gameName;
+}
+
+// =========================================================================
+// =========================================================================
+// 3. ESTRELLAS NEÓN DE CALIFICACIÓN GENERAL (ESTABLE SIN JITTER)
+// =========================================================================
+function initStarRating() {
+    const starsContainer = document.getElementById("stars-overall");
+
+    starButtons.forEach(btn => {
+        const val = parseInt(btn.getAttribute("data-value"), 10);
+
+        // Hover effect: llena e ilumina suavemente de 1 a val
+        btn.addEventListener("mouseenter", () => {
+            renderStars(val, false);
+            if (RATING_TEXTS[val]) {
+                ratingBadge.textContent = RATING_TEXTS[val];
+                ratingBadge.classList.add("active");
+            }
+        });
+
+        // Click to choose: fija el valor y lanza una ola animada
+        btn.addEventListener("click", () => {
+            selectedStarValue = val;
+            inpOverallRating.value = val;
+            renderStars(val, true); // true activa la animación de ola/pop
+            clearError("err-overall");
+            ratingBadge.textContent = RATING_TEXTS[val];
+            ratingBadge.classList.add("active");
+            updateProgress();
+        });
+    });
+
+    // Evento mouseleave en el CONTENEDOR padre completo (evita jitter entre estrellas)
+    if (starsContainer) {
+        starsContainer.addEventListener("mouseleave", () => {
+            renderStars(selectedStarValue, false);
+            if (selectedStarValue > 0 && RATING_TEXTS[selectedStarValue]) {
+                ratingBadge.textContent = RATING_TEXTS[selectedStarValue];
+                ratingBadge.classList.add("active");
+            } else {
+                ratingBadge.textContent = "Selecciona de 1 a 5 estrellas";
+                ratingBadge.classList.remove("active");
+            }
+        });
+    }
+}
+
+function renderStars(activeCount, isClick = false) {
+    starButtons.forEach(btn => {
+        const val = parseInt(btn.getAttribute("data-value"), 10);
+        const icon = btn.querySelector("i");
+        if (val <= activeCount) {
+            btn.classList.add("active");
+            if (isClick && icon) {
+                // Animación escalonada fluida (wave pop)
+                icon.style.animation = "none";
+                void icon.offsetWidth; // forzar reflow
+                icon.style.animation = `starPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${(val - 1) * 0.05}s forwards`;
+            }
+        } else {
+            btn.classList.remove("active");
+            if (icon) icon.style.animation = "none";
+        }
+    });
+}
+
+// =========================================================================
+// 4. RATINGS SEGMENTADOS (LOGÍSTICA 1-5)
+// =========================================================================
+function initSegmentedRatings() {
+    const segmentedContainers = document.querySelectorAll(".segmented-rating");
+    segmentedContainers.forEach(container => {
+        const metricName = container.getAttribute("data-name");
+        const hiddenInp = document.getElementById(`inp-metric-${metricName}`);
+        const buttons = container.querySelectorAll("button");
+
+        buttons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                buttons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                if (hiddenInp) {
+                    hiddenInp.value = btn.getAttribute("data-val");
+                }
+                updateProgress();
+            });
+        });
+    });
+}
+
+// =========================================================================
+// 5. SELECTOR NET PROMOTER SCORE (NPS 0-10)
+// =========================================================================
+function initNpsBar() {
+    npsButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            npsButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const npsVal = btn.getAttribute("data-nps");
+            inpNps.value = npsVal;
+            updateProgress();
+        });
+    });
+}
+
+// =========================================================================
+// 6. ESCUCHA DE INPUTS Y CÁLCULO DE PROGRESO
+// =========================================================================
+function initInputListeners() {
+    if (inpLikedMost) {
+        inpLikedMost.addEventListener("input", () => {
+            clearError("err-comments");
+            updateProgress();
+        });
+    }
+    if (inpSuggestions) {
+        inpSuggestions.addEventListener("input", () => {
+            clearError("err-comments");
+            updateProgress();
+        });
+    }
+}
+
+function updateProgress() {
+    // Calculamos el avance basado en hitos reales y simplificados:
+    let score = 0;
+    const maxScore = 5; // 5 pasos clave
+
+    // 1. Torneo seleccionado (Paso 1)
+    if (inpSelectedGame && inpSelectedGame.value.trim().length > 0) score += 1;
+
+    // 2. Rating General de estrellas (Paso 2)
+    if (selectedStarValue > 0) score += 1;
+
+    // 3. Métricas de logística (al menos 2 de las 4 evaluadas) (Paso 3)
+    const metricsFilled = [
+        document.getElementById("inp-metric-punctuality")?.value,
+        document.getElementById("inp-metric-hardware")?.value,
+        document.getElementById("inp-metric-staff")?.value,
+        document.getElementById("inp-metric-atmosphere")?.value
+    ].filter(Boolean).length;
+
+    if (metricsFilled >= 2) score += 1;
+
+    // 4. NPS (0-10) (Paso 4)
+    if (inpNps && inpNps.value !== "") score += 1;
+
+    // 5. Comentarios obligatorios escritos (Paso 5)
+    const hasTextFeedback = ((inpLikedMost && inpLikedMost.value.trim().length >= 3) || (inpSuggestions && inpSuggestions.value.trim().length >= 3));
+    if (hasTextFeedback) score += 1;
+
+    const percentage = Math.min(100, Math.round((score / maxScore) * 100));
+
+    // Actualizar barra de progreso
+    if (progressFill) progressFill.style.width = `${percentage}%`;
+    if (progressPercentText) progressPercentText.textContent = `${percentage}%`;
+
+    // Mensaje de etapa dinámico
+    if (progressStepText) {
+        if (percentage === 0) progressStepText.textContent = "Comienza la encuesta";
+        else if (percentage < 35) progressStepText.textContent = "Paso 1: Torneo Seleccionado";
+        else if (percentage < 65) progressStepText.textContent = "Paso 2: Calificación y Logística";
+        else if (percentage < 90) progressStepText.textContent = "Paso 3: Recomendación";
+        else if (percentage < 100) progressStepText.textContent = "Paso 4: Escribe tus Comentarios";
+        else progressStepText.textContent = "¡Casi listo para enviar!";
+    }
+}
+
+// =========================================================================
+// 7. ENVÍO Y VALIDACIÓN DEL FORMULARIO
+// =========================================================================
+if (form) {
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Validaciones obligatorias
+        let hasErrors = false;
+        let firstErrorElement = null;
+
+        // Validar Torneo
+        const game = inpSelectedGame ? inpSelectedGame.value.trim() : "";
+        if (!game) {
+            showError("err-game", "Selecciona el torneo o tu rol en el SGF 2026.");
+            if (!firstErrorElement) firstErrorElement = document.getElementById("game-select-grid");
+            hasErrors = true;
+        }
+
+        // Validar Calificación General (Estrellas)
+        if (!selectedStarValue || selectedStarValue === 0) {
+            showError("err-overall", "Por favor califica el evento con las estrellas neón.");
+            if (!firstErrorElement) firstErrorElement = document.getElementById("stars-overall");
+            hasErrors = true;
+        }
+
+        // Validar Comentarios y Futuro del Festival (Obligatorio)
+        const liked = inpLikedMost ? inpLikedMost.value.trim() : "";
+        const suggestions = inpSuggestions ? inpSuggestions.value.trim() : "";
+        if (!liked && !suggestions) {
+            showError("err-comments", "Por favor déjanos tus comentarios o sugerencias antes de enviar.");
+            if (!firstErrorElement) firstErrorElement = inpSuggestions || inpLikedMost;
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            if (firstErrorElement) {
+                firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            showToast("⚠️ Completa los campos requeridos marcados en rojo.", "error");
+            return;
+        }
+
+        // Obtener identidad (cargada por URL param si se envió por correo, o predeterminada)
+        const tag = (inpGamertag && inpGamertag.value.trim()) ? inpGamertag.value.trim() : "Competidor SGF";
+        const email = (inpEmail && inpEmail.value.trim()) ? inpEmail.value.trim() : "";
+
+        // Preparar Payload oficial
+        const ticketId = generateTicketId();
+        const payload = {
+            id: ticketId,
+            timestamp: new Date().toISOString(),
+            dateFormatted: new Intl.DateTimeFormat('es-DO', { dateStyle: 'full', timeStyle: 'short' }).format(new Date()),
+            gamertag: tag,
+            email: email,
+            tournament: game,
+            overallRating: selectedStarValue,
+            metricPunctuality: document.getElementById("inp-metric-punctuality")?.value || "N/A",
+            metricHardware: document.getElementById("inp-metric-hardware")?.value || "N/A",
+            metricStaff: document.getElementById("inp-metric-staff")?.value || "N/A",
+            metricAtmosphere: document.getElementById("inp-metric-atmosphere")?.value || "N/A",
+            nps: inpNps?.value || "N/A",
+            likedMost: inpLikedMost?.value.trim() || "",
+            suggestions: inpSuggestions?.value.trim() || "",
+            userAgent: navigator.userAgent
+        };
+
+        // Mostrar estado de carga en el botón
+        setSubmittingState(true);
+
+        try {
+            // 1. Guardar localmente siempre (garantiza respaldo inmediato)
+            saveSubmissionLocally(payload);
+
+            // 2. Enviar a Google Sheets Webhook si está configurado
+            if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.trim().length > 10) {
+                try {
+                    await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (netErr) {
+                    console.warn("Webhook falló en segundo plano, guardado localmente:", netErr);
+                }
+            }
+
+            // 3. Breve transición suave
+            await new Promise(resolve => setTimeout(resolve, 600));
+
+            // 4. Mostrar pantalla de éxito con celebración
+            showSuccessView(payload);
+            triggerCelebrationConfetti();
+            showToast("🎉 ¡Tus respuestas fueron registradas exitosamente!", "success");
+
+        } catch (err) {
+            console.error("Error en envío:", err);
+            showToast("Hubo un detalle al enviar, pero tus datos se respaldaron en el navegador.", "warning");
+            showSuccessView(payload);
+        } finally {
+            setSubmittingState(false);
+        }
+    });
+}
+
+function setSubmittingState(isSubmitting) {
+    if (!btnSubmit) return;
+    const btnText = btnSubmit.querySelector(".btn-text");
+    const btnLoader = btnSubmit.querySelector(".btn-loader");
+
+    btnSubmit.disabled = isSubmitting;
+    if (isSubmitting) {
+        if (btnText) btnText.style.display = "none";
+        if (btnLoader) btnLoader.style.display = "inline-flex";
+    } else {
+        if (btnText) btnText.style.display = "inline-block";
+        if (btnLoader) btnLoader.style.display = "none";
+    }
+}
+
+// =========================================================================
+// 8. PANTALLA DE ÉXITO Y TICKET DIGITAL
+// =========================================================================
+function showSuccessView(data) {
+    if (form) form.style.display = "none";
+    const heroCard = document.querySelector(".survey-hero-card");
+    if (heroCard) heroCard.style.display = "none";
+
+    if (successView) {
+        successView.style.display = "block";
+        successView.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Datos dinámicos en el ticket
+    const tagDisplay = document.getElementById("success-gamertag-display");
+    const ticketIdDisplay = document.getElementById("success-ticket-id");
+    const gameDisplay = document.getElementById("success-game-display");
+    const dateDisplay = document.getElementById("success-date-display");
+
+    if (tagDisplay) tagDisplay.textContent = data.gamertag;
+    if (ticketIdDisplay) ticketIdDisplay.textContent = data.id;
+    if (gameDisplay) gameDisplay.textContent = data.tournament;
+    if (dateDisplay) {
+        dateDisplay.textContent = new Date().toLocaleDateString('es-DO', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    // Actualizar progreso a 100%
+    if (progressFill) progressFill.style.width = "100%";
+    if (progressPercentText) progressPercentText.textContent = "100%";
+    if (progressStepText) progressStepText.textContent = "Encuesta Completada";
+}
+
+function initActionButtons() {
+    // Copiar Ticket al portapapeles
+    const btnCopyTicket = document.getElementById("btn-copy-ticket");
+    if (btnCopyTicket) {
+        btnCopyTicket.addEventListener("click", () => {
+            const ticketCode = document.getElementById("success-ticket-id")?.textContent || "";
+            if (navigator.clipboard && ticketCode) {
+                navigator.clipboard.writeText(ticketCode).then(() => {
+                    showToast(`Código copiado: ${ticketCode}`, "info");
+                }).catch(() => {
+                    fallbackCopy(ticketCode);
+                });
+            } else {
+                fallbackCopy(ticketCode);
+            }
+        });
+    }
+
+    // Botón Enviar Otra Respuesta
+    const btnNewResponse = document.getElementById("btn-new-response");
+    if (btnNewResponse) {
+        btnNewResponse.addEventListener("click", () => {
+            resetSurvey();
+        });
+    }
+}
+
+function resetSurvey() {
+    if (form) {
+        form.reset();
+        form.style.display = "block";
+    }
+    const heroCard = document.querySelector(".survey-hero-card");
+    if (heroCard) heroCard.style.display = "block";
+
+    if (successView) successView.style.display = "none";
+
+    selectedStarValue = 0;
+    renderStars(0);
+    ratingBadge.textContent = "Selecciona de 1 a 5 estrellas";
+    ratingBadge.classList.remove("active");
+
+    gameCardOptions.forEach(c => c.classList.remove("selected"));
+    segmentedButtons.forEach(b => b.classList.remove("active"));
+    npsButtons.forEach(b => b.classList.remove("active"));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    updateProgress();
+}
+
+function fallbackCopy(text) {
+    const tempInput = document.createElement("input");
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try {
+        document.execCommand("copy");
+        showToast(`Código copiado: ${text}`, "info");
+    } catch (e) {
+        showToast("No se pudo copiar automáticamente.", "error");
+    }
+    document.body.removeChild(tempInput);
+}
+
+// =========================================================================
+// 9. PERSISTENCIA LOCAL (LOCALSTORAGE)
+// =========================================================================
+function saveSubmissionLocally(record) {
+    try {
+        const stored = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+        stored.unshift(record);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stored));
+    } catch (e) {
+        console.warn("No se pudo almacenar en localStorage", e);
+    }
+}
+
+// Función auxiliar para administradores: ver respuestas en consola escribiendo sgfGetSubmissions()
+window.sgfGetSubmissions = function() {
+    try {
+        const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+        console.table(data);
+        return data;
+    } catch (e) {
+        return [];
+    }
+};
+
+// =========================================================================
+// 10. UTILIDADES, ERRORES, TOAST Y CONFETTI
+// =========================================================================
+function generateTicketId() {
+    const randomHex = Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase();
+    const randomNum = Math.floor(100 + Math.random() * 900);
+    return `#SGF26-FB-${randomHex}${randomNum}`;
+}
+
+function showError(msgId, message) {
+    const el = document.getElementById(msgId);
+    if (el) {
+        if (message) el.textContent = message;
+        el.classList.add("visible");
+    }
+}
+
+function clearError(msgId) {
+    const el = document.getElementById(msgId);
+    if (el) {
+        el.classList.remove("visible");
+    }
+}
+
+function showToast(text, type = "info") {
+    if (!toastEl) return;
+    toastEl.textContent = text;
+    toastEl.className = `survey-toast show ${type}`;
+
+    setTimeout(() => {
+        toastEl.className = "survey-toast";
+    }, 3800);
+}
+
+function triggerCelebrationConfetti() {
+    if (typeof confetti === "function") {
+        // Disparo dual épico desde los extremos
+        confetti({
+            particleCount: 70,
+            spread: 60,
+            origin: { x: 0.15, y: 0.7 },
+            colors: ['#a855f7', '#06b6d4', '#ec4899', '#f59e0b', '#ffffff']
+        });
+        setTimeout(() => {
+            confetti({
+                particleCount: 70,
+                spread: 60,
+                origin: { x: 0.85, y: 0.7 },
+                colors: ['#a855f7', '#06b6d4', '#ec4899', '#f59e0b', '#ffffff']
+            });
+        }, 150);
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#a855f7', '#06b6d4', '#10b981', '#f59e0b']
+            });
+        }, 350);
+    }
+}

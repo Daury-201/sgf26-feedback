@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta Oficial de Experiencia • Students Gaming Festival 2026</title>
+    <meta name="description" content="Encuesta oficial de satisfacción y feedback para competidores y asistentes del Students Gaming Festival 2026 (SGF 2026).">
+    <meta name="theme-color" content="#090314">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <!-- Tipografías Oficiales: Orbitron & Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Canvas Confetti para celebración de envío -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Fondos de iluminación ambiental dinámica -->
+    <div class="ambient-glow glow-top-left"></div>
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-center"></div>
+
+    <!-- Barra de Navegación y Progreso Superior -->
+    <header class="survey-topbar">
+        <div class="topbar-brand">
+            <img src="images/logo.png" alt="SGF 2026 Logo" class="brand-logo" onerror="this.style.display='none'">
+            <div class="brand-text">
+                <span class="brand-sub">FESTIVAL OFICIAL</span>
+                <span class="brand-title">SGF 2026 FEEDBACK</span>
+            </div>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-info">
+                <span class="progress-label" id="progress-step-text">Progreso de la encuesta</span>
+                <span class="progress-percent" id="progress-percent-text">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal de la Encuesta -->
+    <main class="survey-container">
+
+        <!-- Tarjeta de Bienvenida / Hero -->
+        <section class="survey-hero-card">
+            <div class="hero-badge-tag">
+                <i class="fa-solid fa-shield-halved"></i> ENCUESTA OFICIAL DE COMPETIDORES • SGF 2026
+            </div>
+            <h1 class="hero-title">
+                Tu Opinión Define el <span class="gradient-text">Próximo Nivel</span>
+            </h1>
+            <p class="hero-desc">
+                ¡Gracias por ser parte del <strong>Students Gaming Festival 2026</strong>! Queremos conocer tu experiencia real como competidor o asistente para seguir elevando la calidad, los setups y la emoción del festival.
+            </p>
+            <div class="hero-meta-row">
+                <div class="meta-item"><i class="fa-regular fa-clock"></i> 2 minutos</div>
+                <div class="meta-item"><i class="fa-solid fa-lock"></i> Respuestas confidenciales</div>
+                <div class="meta-item highlight"><i class="fa-solid fa-bolt"></i> 100% Directo y Rápido</div>
+            </div>
+        </section>
+
+        <!-- Formulario Interactivo -->
+        <form id="feedback-form" novalidate>
+
+            <!-- Inputs Ocultos de Identidad (Cargados opcionalmente por URL ?gamertag=...&email=...) -->
+            <input type="hidden" id="inp-gamertag" name="gamertag" value="Competidor">
+            <input type="hidden" id="inp-email" name="email" value="">
+
+            <!-- =========================================================
+                 PASO 1: TORNEO O ROL EN EL FESTIVAL
+                 ========================================================= -->
+            <section class="survey-section" id="section-identity">
+                <div class="section-header">
+                    <span class="section-number">01</span>
+                    <div class="section-header-text">
+                        <h3>Torneo o Rol en el Festival</h3>
+                        <p>Selecciona el juego en el que competiste o si asististe como espectador.</p>
+                    </div>
+                </div>
+
+                <!-- Selector de Torneo Interactivo con Imágenes Oficiales -->
+                <div class="form-group">
+                    <div class="game-select-grid" id="game-select-grid">
+                        <div class="game-card-option" data-game-key="smash" data-game-name="Super Smash Bros. Ultimate">
+                            <div class="game-thumb">
+                                <img src="images/smash.png" alt="Super Smash Bros. Ultimate">
+                            </div>
+                            <div class="game-info">
+                                <strong>Super Smash Bros. Ultimate</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="mk8" data-game-name="Mario Kart 8 Deluxe">
+                            <div class="game-thumb">
+                                <img src="images/mario-kart.jpg" alt="Mario Kart 8 Deluxe">
+                            </div>
+                            <div class="game-info">
+                                <strong>Mario Kart 8 Deluxe</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="sf6" data-game-name="Street Fighter 6">
+                            <div class="game-thumb">
+                                <img src="images/sf6.jpg" alt="Street Fighter 6">
+                            </div>
+                            <div class="game-info">
+                                <strong>Street Fighter 6</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="nba" data-game-name="NBA 2K26">
+                            <div class="game-thumb">
+                                <img src="images/nba2k26.png" alt="NBA 2K26">
+                            </div>
+                            <div class="game-info">
+                                <strong>NBA 2K26</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="fc26" data-game-name="EA Sports FC 26">
+                            <div class="game-thumb">
+                                <img src="images/fc26.png" alt="EA Sports FC 26">
+                            </div>
+                            <div class="game-info">
+                                <strong>EA Sports FC 26</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="pokemon" data-game-name="Pokémon Champions">
+                            <div class="game-thumb">
+                                <img src="images/pokemon.jpg" alt="Pokémon Champions">
+                            </div>
+                            <div class="game-info">
+                                <strong>Pokémon Champions</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="clash" data-game-name="Clash Royale">
+                            <div class="game-thumb">
+                                <img src="images/clash-royale.png" alt="Clash Royale">
+                            </div>
+                            <div class="game-info">
+                                <strong>Clash Royale</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="brawl" data-game-name="Brawlhalla">
+                            <div class="game-thumb">
+                                <img src="images/brawlhalla.jpg" alt="Brawlhalla">
+                            </div>
+                            <div class="game-info">
+                                <strong>Brawlhalla</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+
+                        <div class="game-card-option" data-game-key="espectador" data-game-name="Espectador / Asistente">
+                            <div class="game-thumb spectator-thumb">
+                                <img src="images/logo.png" alt="SGF 2026 Espectador">
+                            </div>
+                            <div class="game-info">
+                                <strong>Espectador / Público</strong>
+                            </div>
+                            <div class="radio-indicator"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="inp-selected-game" name="tournament" required>
+                    <span class="field-error-msg" id="err-game">Por favor selecciona un torneo o tu rol en el evento.</span>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PASO 2: CALIFICACIÓN GENERAL DEL FESTIVAL
+                 ========================================================= -->
+            <section class="survey-section" id="section-overall">
+                <div class="section-header">
+                    <span class="section-number">02</span>
+                    <div class="section-header-text">
+                        <h3>Experiencia Global</h3>
+                        <p>Califica el festival de manera general con las estrellas neón.</p>
+                    </div>
+                </div>
+
+                <div class="overall-rating-box">
+                    <label class="rating-prompt">
+                        ¿Cómo calificarías tu experiencia en el Students Gaming Festival 2026? <span class="req">*</span>
+                    </label>
+
+                    <div class="neon-stars-row">
+                        <div class="neon-stars-wrapper" id="stars-overall">
+                            <button type="button" class="star-btn" data-value="1" title="1 estrella">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-value="2" title="2 estrellas">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-value="3" title="3 estrellas">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-value="4" title="4 estrellas">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-value="5" title="5 estrellas">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rating-badge-row">
+                        <div class="rating-feedback-badge" id="rating-feedback-label">
+                            Selecciona de 1 a 5 estrellas
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="inp-overall-rating" name="overallRating" required>
+                    <span class="field-error-msg" id="err-overall">Por favor selecciona una calificación general.</span>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PASO 3: LOGÍSTICA, SETUPS Y ATENCIÓN
+                 ========================================================= -->
+            <section class="survey-section" id="section-logistics">
+                <div class="section-header">
+                    <span class="section-number">03</span>
+                    <div class="section-header-text">
+                        <h3>Métricas Logísticas y Calidad</h3>
+                        <p>Evalúa cada aspecto puntual del evento del 1 al 5.</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <!-- Métrica 1: Puntualidad -->
+                    <div class="metric-card" data-metric="punctuality">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div>
+                                <h4>Puntualidad y Flujo de Llaves</h4>
+                                <p>Cumplimiento de horarios, llamados a mesa y velocidad de partidas.</p>
+                            </div>
+                        </div>
+                        <div class="segmented-rating" data-name="punctuality">
+                            <button type="button" data-val="1">1</button>
+                            <button type="button" data-val="2">2</button>
+                            <button type="button" data-val="3">3</button>
+                            <button type="button" data-val="4">4</button>
+                            <button type="button" data-val="5">5</button>
+                        </div>
+                        <div class="metric-scale-labels">
+                            <span>Deficiente</span>
+                            <span>Excelente</span>
+                        </div>
+                        <input type="hidden" name="metric_punctuality" id="inp-metric-punctuality">
+                    </div>
+
+                    <!-- Métrica 2: Equipamiento -->
+                    <div class="metric-card" data-metric="hardware">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fa-solid fa-tv"></i></div>
+                            <div>
+                                <h4>Equipamiento y Setup Gamer</h4>
+                                <p>Calidad de pantallas, consolas, mandos, sonido y fluidez visual.</p>
+                            </div>
+                        </div>
+                        <div class="segmented-rating" data-name="hardware">
+                            <button type="button" data-val="1">1</button>
+                            <button type="button" data-val="2">2</button>
+                            <button type="button" data-val="3">3</button>
+                            <button type="button" data-val="4">4</button>
+                            <button type="button" data-val="5">5</button>
+                        </div>
+                        <div class="metric-scale-labels">
+                            <span>Deficiente</span>
+                            <span>Excelente</span>
+                        </div>
+                        <input type="hidden" name="metric_hardware" id="inp-metric-hardware">
+                    </div>
+
+                    <!-- Métrica 3: Staff & Jueces -->
+                    <div class="metric-card" data-metric="staff">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fa-solid fa-user-shield"></i></div>
+                            <div>
+                                <h4>Atención del Staff y Jueces</h4>
+                                <p>Amabilidad, claridad en las reglas y resolución de dudas.</p>
+                            </div>
+                        </div>
+                        <div class="segmented-rating" data-name="staff">
+                            <button type="button" data-val="1">1</button>
+                            <button type="button" data-val="2">2</button>
+                            <button type="button" data-val="3">3</button>
+                            <button type="button" data-val="4">4</button>
+                            <button type="button" data-val="5">5</button>
+                        </div>
+                        <div class="metric-scale-labels">
+                            <span>Deficiente</span>
+                            <span>Excelente</span>
+                        </div>
+                        <input type="hidden" name="metric_staff" id="inp-metric-staff">
+                    </div>
+
+                    <!-- Métrica 4: Ambiente y Entretenimiento -->
+                    <div class="metric-card" data-metric="atmosphere">
+                        <div class="metric-header">
+                            <div class="metric-icon"><i class="fa-solid fa-fire"></i></div>
+                            <div>
+                                <h4>Ambiente, Casteo y Comunidad</h4>
+                                <p>Música, animación en tarima, emoción del público y comodidad.</p>
+                            </div>
+                        </div>
+                        <div class="segmented-rating" data-name="atmosphere">
+                            <button type="button" data-val="1">1</button>
+                            <button type="button" data-val="2">2</button>
+                            <button type="button" data-val="3">3</button>
+                            <button type="button" data-val="4">4</button>
+                            <button type="button" data-val="5">5</button>
+                        </div>
+                        <div class="metric-scale-labels">
+                            <span>Deficiente</span>
+                            <span>Excelente</span>
+                        </div>
+                        <input type="hidden" name="metric_atmosphere" id="inp-metric-atmosphere">
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PASO 4: RECOMENDACIÓN
+                 ========================================================= -->
+            <section class="survey-section" id="section-nps">
+                <div class="section-header">
+                    <span class="section-number">04</span>
+                    <div class="section-header-text">
+                        <h3>Índice de Recomendación</h3>
+                        <p>¿Qué tan probable es que recomiendes el SGF a tus amigos gamers?</p>
+                    </div>
+                </div>
+
+                <div class="nps-card">
+                    <p class="nps-prompt">En una escala del <strong>0 al 10</strong>, ¿volverías o recomendarías el evento a tus compañeros?</p>
+                    <div class="nps-segmented-bar" id="nps-bar">
+                        <button type="button" data-nps="0">0</button>
+                        <button type="button" data-nps="1">1</button>
+                        <button type="button" data-nps="2">2</button>
+                        <button type="button" data-nps="3">3</button>
+                        <button type="button" data-nps="4">4</button>
+                        <button type="button" data-nps="5">5</button>
+                        <button type="button" data-nps="6">6</button>
+                        <button type="button" data-nps="7">7</button>
+                        <button type="button" data-nps="8">8</button>
+                        <button type="button" data-nps="9">9</button>
+                        <button type="button" data-nps="10">10</button>
+                    </div>
+                    <div class="nps-legend">
+                        <span class="nps-detractor"><i class="fa-solid fa-thumbs-down"></i> Poco probable (0 - 6)</span>
+                        <span class="nps-neutral">Neutral (7 - 8)</span>
+                        <span class="nps-promoter"><i class="fa-solid fa-thumbs-up"></i> ¡Totalmente seguro! (9 - 10)</span>
+                    </div>
+                    <input type="hidden" id="inp-nps" name="nps">
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 PASO 5: FEEDBACK ABIERTO Y SUGERENCIAS
+                 ========================================================= -->
+            <section class="survey-section" id="section-open-feedback">
+                <div class="section-header">
+                    <span class="section-number">05</span>
+                    <div class="section-header-text">
+                        <h3>Comentarios y Futuro del Festival</h3>
+                        <p>Tus ideas definen directamente las reglas y juegos del SGF 2027.</p>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="inp-liked-most">
+                        <i class="fa-solid fa-heart" style="color: #ec4899;"></i> ¿Qué fue lo que MÁS te gustó de esta edición?
+                    </label>
+                    <textarea id="inp-liked-most" name="likedMost" rows="3" placeholder="Ej: Las finales en pantalla gigante, el ambiente competitivo, el casteo de Mario Kart, etc."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="inp-suggestions">
+                        <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> ¿Qué cosas puntuales debemos MEJORAR o qué nuevo juego quisieras ver en 2027? <span class="req">*</span>
+                    </label>
+                    <textarea id="inp-suggestions" name="suggestions" rows="3" placeholder="Ej: Agregar Tekken 8 o Valorant, mejorar los tiempos de espera entre rondas, etc."></textarea>
+                    <span class="field-error-msg" id="err-comments">Por favor escribe tus comentarios o sugerencias antes de enviar.</span>
+                </div>
+            </section>
+
+            <!-- Botón de Envío Oficial -->
+            <div class="form-submit-row">
+                <button type="submit" class="btn-submit-survey" id="btn-submit">
+                    <span class="btn-text">ENVIAR FEEDBACK OFICIAL</span>
+                    <span class="btn-loader" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Registrando...</span>
+                </button>
+                <p class="submit-disclaimer">
+                    <i class="fa-solid fa-shield-halved"></i> Tus respuestas se procesan con cifrado y se almacenan de forma segura.
+                </p>
+            </div>
+        </form>
+
+        <!-- Pantalla de Éxito / Victory Screen (Oculta hasta el envío) -->
+        <section class="survey-success-card" id="success-view" style="display: none;">
+            <div class="success-trophy-badge">🏆</div>
+            <div class="success-meta-tag">FEEDBACK CONFIRMADO</div>
+            <h2 class="success-title">¡Misión Cumplida, <span id="success-gamertag-display">Gamer</span>!</h2>
+            <p class="success-desc">
+                Tus respuestas han sido recibidas y registradas oficialmente en el sistema del <strong>Students Gaming Festival 2026</strong>. Gracias por ayudarnos a que la próxima edición sea aún más legendaria.
+            </p>
+
+            <div class="success-ticket-box">
+                <div class="ticket-header">
+                    <span>TICKET OFICIAL DE FEEDBACK</span>
+                    <span class="ticket-status">VERIFICADO ✓</span>
+                </div>
+                <div class="ticket-body">
+                    <div class="ticket-code" id="success-ticket-id">#SGF26-FB-8942</div>
+                    <div class="ticket-details">
+                        <div><span>Torneo:</span> <strong id="success-game-display">Oficial</strong></div>
+                        <div><span>Fecha:</span> <strong id="success-date-display">Septiembre 2026</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-actions-row">
+                <button type="button" class="btn-action-secondary" id="btn-copy-ticket">
+                    <i class="fa-solid fa-copy"></i> Copiar Código de Ticket
+                </button>
+                <button type="button" class="btn-action-primary" id="btn-new-response">
+                    <i class="fa-solid fa-rotate-left"></i> Enviar Otra Respuesta
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer Oficial -->
+        <footer class="survey-footer">
+            <div class="footer-logos">
+                <img src="images/pucmm.png" alt="PUCMM" class="partner-logo" onerror="this.style.display='none'">
+                <img src="images/ceit.png" alt="CEIT" class="partner-logo" onerror="this.style.display='none'">
+            </div>
+            <p>© 2026 Students Gaming Festival. Todos los derechos reservados.</p>
+        </footer>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="survey-toast" class="survey-toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
