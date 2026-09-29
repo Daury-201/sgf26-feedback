@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGF 2026 Analytics • Executive Feedback Dashboard</title>
+    <meta name="description" content="Dashboard ejecutivo y analítica en tiempo real del Students Gaming Festival 2026. Métricas de satisfacción, NPS, hardware y logística.">
+    <meta name="theme-color" content="#090314">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <!-- Tipografías Oficiales -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Chart.js para visualización de métricas avanzadas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="dashboard.css?v=2.0">
+</head>
+<body class="dashboard-body">
+
+    <!-- Luces de fondo cyberpunk -->
+    <div class="ambient-glow glow-top-left"></div>
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-center"></div>
+
+    <!-- =========================================================================
+         1. PANTALLA DE ACCESO DE SEGURIDAD (ADMIN LOGIN GATE)
+         ========================================================================= -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <div class="login-brand">
+                <img src="images/logo.png" alt="SGF 2026 Logo" class="login-logo" onerror="this.style.display='none'">
+                <div class="login-badge-tag">
+                    <i class="fa-solid fa-lock"></i> ACCESO RESTRINGIDO • COMITÉ SGF 2026
+                </div>
+                <h1 class="login-title">PANEL <span class="gradient-text">ANALÍTICO</span></h1>
+                <p class="login-desc">Ingresa tus credenciales administrativas para visualizar las métricas y respuestas oficiales en tiempo real.</p>
+            </div>
+
+            <form id="login-form" class="login-form" novalidate>
+                <div class="form-group-login">
+                    <label for="admin-user"><i class="fa-solid fa-user-shield"></i> Usuario Administrativo</label>
+                    <input type="text" id="admin-user" class="login-input" placeholder="admin" required autocomplete="username">
+                </div>
+
+                <div class="form-group-login">
+                    <label for="admin-pass"><i class="fa-solid fa-key"></i> Contraseña de Acceso</label>
+                    <div class="password-field-wrapper">
+                        <input type="password" id="admin-pass" class="login-input" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password" id="btn-toggle-password" title="Ver contraseña">
+                            <i class="fa-regular fa-eye" id="toggle-pass-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="login-options-row">
+                    <label class="remember-chk-label">
+                        <input type="checkbox" id="chk-remember-session" checked> Recordar sesión en este equipo
+                    </label>
+                </div>
+
+                <div class="login-alert-msg" id="login-error-msg">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <span id="login-error-text">Usuario o contraseña incorrectos.</span>
+                </div>
+
+                <button type="submit" class="btn-submit-login" id="btn-submit-login">
+                    <span>Desbloquear Dashboard</span>
+                    <i class="fa-solid fa-unlock"></i>
+                </button>
+            </form>
+
+            <div class="login-footer-links">
+                <a href="index.html" class="link-back-survey">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al formulario de competidores
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         2. DASHBOARD EJECUTIVO (SOLO VISIBLE TRAS AUTENTICARSE)
+         ========================================================================= -->
+    <div id="dashboard-app" class="dashboard-app-wrapper" style="display: none;">
+
+        <!-- Header Principal del Dashboard -->
+        <header class="dash-topbar">
+            <div class="dash-brand">
+                <img src="images/logo.png" alt="SGF 2026 Logo" class="dash-logo" onerror="this.style.display='none'">
+                <div class="dash-title-group">
+                    <div class="dash-badge-live">
+                        <span class="pulse-dot"></span>
+                        <span id="data-status-label">EN VIVO • FEEDBACK HUB</span>
+                    </div>
+                    <h1 class="dash-title">SGF 2026 <span class="gradient-text">EXECUTIVE ANALYTICS</span></h1>
+                </div>
+            </div>
+
+            <div class="dash-actions">
+                <button type="button" class="dash-btn btn-refresh" id="btn-refresh-data" title="Actualizar datos en tiempo real">
+                    <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i> Sincronizar
+                </button>
+                <button type="button" class="dash-btn btn-export" id="btn-export-csv" title="Descargar hoja en CSV / Excel">
+                    <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                </button>
+                <button type="button" class="dash-btn btn-print" onclick="window.print()" title="Imprimir o Guardar en PDF">
+                    <i class="fa-solid fa-file-pdf"></i> Reporte PDF
+                </button>
+                <a href="index.html" class="dash-btn btn-survey" title="Ir al formulario de competidores">
+                    <i class="fa-solid fa-clipboard-question"></i> Formulario
+                </a>
+                <button type="button" class="dash-btn btn-logout" id="btn-logout" title="Cerrar Sesión Segura">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenido Principal -->
+        <main class="dash-container">
+
+            <!-- Estado de conexión con Google Sheets -->
+            <div class="sync-banner" id="sync-banner" style="display: none;">
+                <div class="sync-banner-content">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span id="sync-banner-text">Conectando con Google Sheets...</span>
+                </div>
+            </div>
+
+            <!-- Barra de Filtros y Búsqueda -->
+            <section class="dash-controls-card">
+                <div class="filter-group">
+                    <label for="filter-tournament"><i class="fa-solid fa-gamepad"></i> Torneo:</label>
+                    <select id="filter-tournament" class="dash-select">
+                        <option value="ALL">Todos los Torneos (General)</option>
+                        <option value="smash">Super Smash Bros. Ultimate</option>
+                        <option value="fc26">EA Sports FC 26</option>
+                        <option value="mariokart">Mario Kart 8 Deluxe</option>
+                        <option value="streetfighter">Street Fighter 6</option>
+                        <option value="valorant">Valorant 5v5</option>
+                        <option value="freeplay">Zona Free Play / Espectador</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-rating"><i class="fa-solid fa-star"></i> Calificación:</label>
+                    <select id="filter-rating" class="dash-select">
+                        <option value="ALL">Todas las Estrellas (1 - 5 ⭐)</option>
+                        <option value="5">👑 5 Estrellas (Legendario)</option>
+                        <option value="4">🔥 4 Estrellas (Muy Bueno)</option>
+                        <option value="3">🎮 3 Estrellas (Bueno)</option>
+                        <option value="2">⚠️ 2 Estrellas (Regular)</option>
+                        <option value="1">💀 1 Estrella (Deficiente)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group search-box">
+                    <label for="filter-search"><i class="fa-solid fa-magnifying-glass"></i> Buscar:</label>
+                    <input type="text" id="filter-search" class="dash-input" placeholder="GamerTag, email, comentarios...">
+                </div>
+
+                <div class="data-source-toggle">
+                    <span class="source-tag" id="source-indicator">
+                        <i class="fa-solid fa-database"></i> 0 Respuestas Reales
+                    </span>
+                </div>
+            </section>
+
+            <!-- KPI Summary Cards (Métricas Clave) -->
+            <section class="kpi-grid">
+                <!-- KPI 1: Total Respuestas -->
+                <div class="kpi-card glow-cyan">
+                    <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-body">
+                        <span class="kpi-label">TOTAL PARTICIPANTES</span>
+                        <div class="kpi-value-row">
+                            <span class="kpi-value" id="kpi-total-responses">0</span>
+                            <span class="kpi-sub" id="kpi-total-meta">/ 171 competidores</span>
+                        </div>
+                        <div class="kpi-bar-track">
+                            <div class="kpi-bar-fill fill-cyan" id="kpi-participation-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Satisfacción Global CSAT -->
+                <div class="kpi-card glow-gold">
+                    <div class="kpi-icon"><i class="fa-solid fa-star"></i></div>
+                    <div class="kpi-body">
+                        <span class="kpi-label">SATISFACCIÓN GLOBAL (CSAT)</span>
+                        <div class="kpi-value-row">
+                            <span class="kpi-value" id="kpi-csat-score">0.0</span>
+                            <span class="kpi-max">/ 5.0</span>
+                            <span class="kpi-badge badge-gold" id="kpi-csat-badge">SIN DATOS</span>
+                        </div>
+                        <span class="kpi-note" id="kpi-csat-percent">Esperando respuestas</span>
+                    </div>
+                </div>
+
+                <!-- KPI 3: Net Promoter Score (NPS) -->
+                <div class="kpi-card glow-purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="kpi-body">
+                        <span class="kpi-label">NET PROMOTER SCORE (NPS)</span>
+                        <div class="kpi-value-row">
+                            <span class="kpi-value" id="kpi-nps-score">+0</span>
+                            <span class="kpi-badge badge-purple" id="kpi-nps-tier">N/A</span>
+                        </div>
+                        <span class="kpi-note" id="kpi-nps-breakdown">0% Promotores • 0% Detractores</span>
+                    </div>
+                </div>
+
+                <!-- KPI 4: Aprobación de Hardware y Setups -->
+                <div class="kpi-card glow-emerald">
+                    <div class="kpi-icon"><i class="fa-solid fa-tv"></i></div>
+                    <div class="kpi-body">
+                        <span class="kpi-label">HARDWARE Y SETUPS</span>
+                        <div class="kpi-value-row">
+                            <span class="kpi-value" id="kpi-hardware-score">0.0</span>
+                            <span class="kpi-max">/ 5.0</span>
+                            <span class="kpi-badge badge-emerald" id="kpi-hw-badge">N/A</span>
+                        </div>
+                        <span class="kpi-note">Pantallas, consolas y mandos oficiales</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráficos Principales (Charts Grid) -->
+            <section class="charts-grid">
+                <!-- Gráfico 1: Distribución de Estrellas -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fa-solid fa-star-half-stroke"></i> Calificación de Experiencia</h3>
+                            <p>Distribución de votos de 1 a 5 estrellas</p>
+                        </div>
+                        <span class="chart-chip">General</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-stars"></canvas>
+                        <div class="chart-empty-overlay" id="empty-stars" style="display: none;">
+                            <i class="fa-regular fa-chart-bar"></i>
+                            <p>Esperando primeras calificaciones</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Radar de Excelencia Operativa -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fa-solid fa-bullseye"></i> Pilares Logísticos y Operativos</h3>
+                            <p>Puntualidad, Hardware, Staff y Ambiente (1 a 5)</p>
+                        </div>
+                        <span class="chart-chip">Operaciones</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-radar"></canvas>
+                        <div class="chart-empty-overlay" id="empty-radar" style="display: none;">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <p>Esperando métricas operativas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 3: Participación por Torneo -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fa-solid fa-trophy"></i> Respuestas por Torneo</h3>
+                            <p>Participación por disciplina competitiva</p>
+                        </div>
+                        <span class="chart-chip">Comunidad</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-tournaments"></canvas>
+                        <div class="chart-empty-overlay" id="empty-tournaments" style="display: none;">
+                            <i class="fa-solid fa-gamepad"></i>
+                            <p>Esperando respuestas por juego</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 4: Desglose NPS -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fa-solid fa-heart-pulse"></i> Fidelidad y Recomendación</h3>
+                            <p>Promotores (9-10), Pasivos (7-8), Detractores (0-6)</p>
+                        </div>
+                        <span class="chart-chip">Lealtad</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-nps"></canvas>
+                        <div class="chart-empty-overlay" id="empty-nps" style="display: none;">
+                            <i class="fa-regular fa-face-smile"></i>
+                            <p>Esperando datos de recomendación</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Muro de Testimonios y Sugerencias SGF 2027 -->
+            <section class="feedback-wall-section">
+                <div class="section-title-row">
+                    <h2><i class="fa-solid fa-comments"></i> Muro de Opiniones y Visión 2027</h2>
+                    <div class="tab-pills">
+                        <button class="pill-btn active" data-tab="liked" onclick="switchQuotesTab('liked')">
+                            <i class="fa-solid fa-heart"></i> Lo que Más Gustó
+                        </button>
+                        <button class="pill-btn" data-tab="suggestions" onclick="switchQuotesTab('suggestions')">
+                            <i class="fa-solid fa-lightbulb"></i> Ideas y Sugerencias 2027
+                        </button>
+                    </div>
+                </div>
+
+                <div class="quotes-grid" id="quotes-container">
+                    <!-- Se inyectan dinámicamente con JavaScript -->
+                </div>
+            </section>
+
+            <!-- Tabla Completa de Registros Detallados -->
+            <section class="table-section">
+                <div class="table-header-row">
+                    <div>
+                        <h2><i class="fa-solid fa-table-list"></i> Registros de Competidores</h2>
+                        <p id="table-count-label">Cargando datos reales...</p>
+                    </div>
+                    <div class="table-actions">
+                        <button class="dash-btn-sm" onclick="exportFilteredCsv()">
+                            <i class="fa-solid fa-download"></i> Descargar Datos Filtrados
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="dash-table" id="responses-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Fecha</th>
+                                <th>GamerTag</th>
+                                <th>Torneo</th>
+                                <th>Calificación</th>
+                                <th>Logística</th>
+                                <th>NPS</th>
+                                <th>Comentarios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="responses-tbody">
+                            <!-- Filas inyectadas dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Footer Oficial -->
+            <footer class="dash-footer">
+                <div class="footer-logos">
+                    <img src="images/pucmm.png" alt="PUCMM" class="partner-logo" onerror="this.style.display='none'">
+                    <img src="images/ceit.png" alt="CEIT" class="partner-logo" onerror="this.style.display='none'">
+                </div>
+                <p>© 2026 Students Gaming Festival • Centro de Inteligencia y Analítica de Experiencia</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="dashboard.js?v=2.0"></script>
+</body>
+</html>
