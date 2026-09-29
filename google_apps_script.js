@@ -1,4 +1,4 @@
-﻿/**
+/**
  * STUDENTS GAMING FESTIVAL 2026 (SGF 2026)
  * Sistema: Webhook de Feedback + Dashboard API + Envío de Validación Personal
  * CEIT & PUCMM
@@ -1266,7 +1266,7 @@ var LISTA_PARTICIPANTES = [
     },
     {
         "email":  "reyessaulfd@gmail.com",
-        "gamertag":  "Re⁸yes Saul Fernandez"
+        "gamertag":  "Reyes Saul Fernandez"
     }
 ]
 ;
@@ -1311,10 +1311,25 @@ function enviarRangoParticipantes(inicio, fin, nombreLote) {
   var cuotaInicial = MailApp.getRemainingDailyQuota();
   Logger.log("📊 Cuota antes de iniciar: " + cuotaInicial);
   
+  if (cuotaInicial <= 0) {
+    var msg = "⚠️ Sin cuota disponible hoy en sgfceit26@gmail.com. Espera a que Google renueve el límite de 24 horas.";
+    Logger.log(msg);
+    try { SpreadsheetApp.getUi().alert("⚠️ Sin Cuota", msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch(e){}
+    return;
+  }
+  
   var exitosos = 0;
   var fallidos = 0;
   
   for (var i = inicio; i < fin && i < LISTA_PARTICIPANTES.length; i++) {
+    var cuotaActual = MailApp.getRemainingDailyQuota();
+    if (cuotaActual <= 1) {
+      var alerta = "⚠️ Límite de envíos alcanzado hoy en Google (quedan " + cuotaActual + "). Se pausó el envío en el participante #" + (i + 1) + ".";
+      Logger.log(alerta);
+      try { SpreadsheetApp.getUi().alert("Alerta de Cuota Diaria", alerta, SpreadsheetApp.getUi().ButtonSet.OK); } catch(e){}
+      break;
+    }
+
     var p = LISTA_PARTICIPANTES[i];
     try {
       enviarCorreoIndividual(p.email, p.gamertag);
