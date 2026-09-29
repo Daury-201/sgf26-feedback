@@ -9,9 +9,7 @@
 // =========================================================================
 // CONFIGURACIÓN DE CONEXIÓN (GOOGLE SHEETS WEBHOOK)
 // =========================================================================
-// Pega aquí la URL de tu Google Apps Script implementado como Web App.
-// Si está vacío, el formulario guardará automáticamente en LocalStorage para pruebas.
-const GOOGLE_SHEETS_WEBHOOK_URL = ""; 
+const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyZ13BhWqpeBJ-vIhJ0U8iAxQJbTSXunhOvqhhk0pune6b3OiRFgG7D-H5PDaf8bebQow/exec"; 
 
 const LOCAL_STORAGE_KEY = "sgf26_feedback_submissions_v1";
 
