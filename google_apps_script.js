@@ -327,7 +327,7 @@ function enviarCorreoIndividual(destinatario, gamertag) {
   var htmlTemplate = obtenerPlantillaEmailHtml(tag, destinatario, linkEncuesta);
 
   var asunto = "Tu opinión sobre el Students Gaming Festival 2026 - Evaluación Oficial CEIT";
-  var correoInstitucional = "ceit-csti@ce.pucmm.edu.do";
+  var replyToInstitucional = "ceit-csti@ce.pucmm.edu.do";
 
   var textoPlano = "Estimado/a participante " + tag + ":\n\n" +
     "En nombre del Comité Organizador del Students Gaming Festival 2026, el CEIT y la PUCMM, agradecemos tu destacada participación.\n\n" +
@@ -337,25 +337,12 @@ function enviarCorreoIndividual(destinatario, gamertag) {
     "Tiempo estimado: 1 minuto.\n\n" +
     "Comité Organizador Oficial SGF 2026 - CEIT y PUCMM";
 
-  // 1. Intentar enviar utilizando directamente el remitente oficial si está habilitado como alias en Gmail
-  try {
-    GmailApp.sendEmail(destinatario, asunto, textoPlano, {
-      from: correoInstitucional,
-      htmlBody: htmlTemplate,
-      name: "CEIT - Students Gaming Festival 2026",
-      replyTo: correoInstitucional
-    });
-    return;
-  } catch (errAlias) {
-    Logger.log("Aviso alias institucional: " + errAlias.message + ". Enviando con la cuenta activa y replyTo a " + correoInstitucional);
-  }
-
-  // 2. Si el alias no está configurado en tu Gmail, enviar con la cuenta activa pero con remitente y replyTo institucional
+  // Al ejecutarse en la cuenta ittgrupo2@gmail.com, se envía nativamente desde ella
   try {
     GmailApp.sendEmail(destinatario, asunto, textoPlano, {
       htmlBody: htmlTemplate,
       name: "CEIT - Students Gaming Festival 2026",
-      replyTo: correoInstitucional
+      replyTo: replyToInstitucional
     });
   } catch (e1) {
     Logger.log("Aviso GmailApp, intentando con MailApp: " + e1.toString());
@@ -365,7 +352,7 @@ function enviarCorreoIndividual(destinatario, gamertag) {
       body: textoPlano,
       htmlBody: htmlTemplate,
       name: "CEIT - Students Gaming Festival 2026",
-      replyTo: correoInstitucional
+      replyTo: replyToInstitucional
     });
   }
 }
