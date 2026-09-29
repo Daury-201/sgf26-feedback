@@ -20,8 +20,64 @@
     <!-- Canvas Confetti para celebración de envío -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=4.0">
+    <link rel="stylesheet" href="style.css?v=5.0">
     <script>
+        window.selectedStarValue = 0;
+
+        window.RATING_TEXTS = {
+            1: "💀 1/5 - Deficiente (Pudo ser mucho mejor)",
+            2: "⚠️ 2/5 - Regular (Aspectos clave a pulir)",
+            3: "🎮 3/5 - Bueno (Buena experiencia competitiva)",
+            4: "🔥 4/5 - ¡Muy Bueno! (Gran nivel y organización)",
+            5: "👑 5/5 - ¡LEGENDARIO! (Experiencia inolvidable)"
+        };
+
+        window.renderStars = function(activeCount, isClick) {
+            var stars = document.querySelectorAll("#stars-overall .star-btn");
+            stars.forEach(function(btn) {
+                var val = parseInt(btn.getAttribute("data-value"), 10);
+                var icon = btn.querySelector("i");
+                if (val <= activeCount) {
+                    btn.classList.add("active");
+                    if (icon) {
+                        icon.style.setProperty("color", "#f59e0b", "important");
+                        icon.style.setProperty("filter", "drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 28px rgba(245, 158, 11, 0.5))", "important");
+                        if (isClick) {
+                            icon.style.animation = "none";
+                            void icon.offsetWidth;
+                            icon.style.animation = "starPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) " + ((val - 1) * 0.06) + "s forwards";
+                        }
+                    }
+                } else {
+                    btn.classList.remove("active");
+                    if (icon) {
+                        icon.style.setProperty("color", "rgba(255, 255, 255, 0.16)", "important");
+                        icon.style.setProperty("filter", "none", "important");
+                        icon.style.animation = "none";
+                    }
+                }
+            });
+
+            var badge = document.getElementById("rating-feedback-label");
+            if (badge) {
+                if (activeCount > 0 && window.RATING_TEXTS[activeCount]) {
+                    badge.textContent = window.RATING_TEXTS[activeCount];
+                    badge.classList.add("active");
+                    badge.style.setProperty("border-color", "#f59e0b", "important");
+                    badge.style.setProperty("color", "#fef08a", "important");
+                    badge.style.setProperty("background", "rgba(245, 158, 11, 0.15)", "important");
+                    badge.style.setProperty("box-shadow", "0 0 15px rgba(245, 158, 11, 0.4)", "important");
+                } else {
+                    badge.textContent = "Selecciona de 1 a 5 estrellas";
+                    badge.classList.remove("active");
+                    badge.style.removeProperty("border-color");
+                    badge.style.removeProperty("color");
+                    badge.style.removeProperty("background");
+                    badge.style.removeProperty("box-shadow");
+                }
+            }
+        };
+
         window.selectGameCard = function(el) {
             document.querySelectorAll('.game-card-option').forEach(function(c) {
                 c.classList.remove('selected');
@@ -36,41 +92,21 @@
         };
 
         window.selectStar = function(val) {
-            selectedStarValue = parseInt(val, 10);
+            window.selectedStarValue = parseInt(val, 10);
             var inp = document.getElementById('inp-overall-rating');
-            if (inp) inp.value = selectedStarValue;
-            if (typeof renderStars === 'function') renderStars(selectedStarValue, true);
+            if (inp) inp.value = window.selectedStarValue;
+            window.renderStars(window.selectedStarValue, true);
             var err = document.getElementById('err-overall');
             if (err) err.classList.remove('visible');
-            var badge = document.getElementById('rating-feedback-label');
-            if (badge && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[selectedStarValue]) {
-                badge.textContent = RATING_TEXTS[selectedStarValue];
-                badge.classList.add('active');
-            }
             if (typeof updateProgress === 'function') updateProgress();
         };
 
         window.hoverStar = function(val) {
-            if (typeof renderStars === 'function') renderStars(parseInt(val, 10), false);
-            var badge = document.getElementById('rating-feedback-label');
-            if (badge && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[val]) {
-                badge.textContent = RATING_TEXTS[val];
-                badge.classList.add('active');
-            }
+            window.renderStars(parseInt(val, 10), false);
         };
 
         window.leaveStar = function() {
-            if (typeof renderStars === 'function') renderStars(selectedStarValue || 0, false);
-            var badge = document.getElementById('rating-feedback-label');
-            if (badge) {
-                if (selectedStarValue > 0 && typeof RATING_TEXTS !== 'undefined' && RATING_TEXTS[selectedStarValue]) {
-                    badge.textContent = RATING_TEXTS[selectedStarValue];
-                    badge.classList.add('active');
-                } else {
-                    badge.textContent = 'Selecciona de 1 a 5 estrellas';
-                    badge.classList.remove('active');
-                }
-            }
+            window.renderStars(window.selectedStarValue || 0, false);
         };
 
         window.selectMetric = function(btn, metricName, val) {
@@ -142,9 +178,8 @@
                 ¡Gracias por ser parte del <strong>Students Gaming Festival 2026</strong>! Queremos conocer tu experiencia real como competidor o asistente para seguir elevando la calidad, los setups y la emoción del festival.
             </p>
             <div class="hero-meta-row">
-                <div class="meta-item"><i class="fa-regular fa-clock"></i> 2 minutos</div>
+                <div class="meta-item"><i class="fa-regular fa-clock"></i> 1 min</div>
                 <div class="meta-item"><i class="fa-solid fa-lock"></i> Respuestas confidenciales</div>
-                <div class="meta-item highlight"><i class="fa-solid fa-bolt"></i> 100% Directo y Rápido</div>
             </div>
         </section>
 
@@ -554,6 +589,6 @@
     <!-- Toast Notification Container -->
     <div id="survey-toast" class="survey-toast"></div>
 
-    <script src="app.js?v=4.0"></script>
+    <script src="app.js?v=5.0"></script>
 </body>
 </html>

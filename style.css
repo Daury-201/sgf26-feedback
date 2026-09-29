@@ -638,9 +638,9 @@ body {
 
 .star-btn.active i,
 .star-btn.hovered i {
-    color: var(--accent-gold);
-    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 28px rgba(245, 158, 11, 0.45));
-    transform: scale(1.15);
+    color: var(--accent-gold) !important;
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 28px rgba(245, 158, 11, 0.45)) !important;
+    transform: scale(1.15) !important;
 }
 
 .star-btn:active i {
@@ -649,8 +649,8 @@ body {
 
 @keyframes starPop {
     0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.6)); }
-    50% { transform: scale(1.35); filter: drop-shadow(0 0 25px rgba(245, 158, 11, 1)); color: #ffffff; }
-    100% { transform: scale(1.15); filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.95)); color: var(--accent-gold); }
+    50% { transform: scale(1.35); filter: drop-shadow(0 0 25px rgba(245, 158, 11, 1)); color: #ffffff !important; }
+    100% { transform: scale(1.15); filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.95)); color: var(--accent-gold) !important; }
 }
 
 .rating-badge-row {

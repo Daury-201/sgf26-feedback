@@ -65,40 +65,22 @@ window.selectGameCard = function(el) {
 };
 
 window.selectStar = function(val) {
-    selectedStarValue = parseInt(val, 10);
+    const parsed = parseInt(val, 10) || 0;
+    selectedStarValue = parsed;
+    window.selectedStarValue = parsed;
     const inp = document.getElementById("inp-overall-rating");
-    if (inp) inp.value = selectedStarValue;
-    renderStars(selectedStarValue, true);
+    if (inp) inp.value = parsed;
+    renderStars(parsed, true);
     clearError("err-overall");
-    const badge = document.getElementById("rating-feedback-label");
-    if (badge && RATING_TEXTS[selectedStarValue]) {
-        badge.textContent = RATING_TEXTS[selectedStarValue];
-        badge.classList.add("active");
-    }
     updateProgress();
 };
 
 window.hoverStar = function(val) {
-    renderStars(parseInt(val, 10), false);
-    const badge = document.getElementById("rating-feedback-label");
-    if (badge && RATING_TEXTS[val]) {
-        badge.textContent = RATING_TEXTS[val];
-        badge.classList.add("active");
-    }
+    renderStars(parseInt(val, 10) || 0, false);
 };
 
 window.leaveStar = function() {
-    renderStars(selectedStarValue, false);
-    const badge = document.getElementById("rating-feedback-label");
-    if (badge) {
-        if (selectedStarValue > 0 && RATING_TEXTS[selectedStarValue]) {
-            badge.textContent = RATING_TEXTS[selectedStarValue];
-            badge.classList.add("active");
-        } else {
-            badge.textContent = "Selecciona de 1 a 5 estrellas";
-            badge.classList.remove("active");
-        }
-    }
+    renderStars(selectedStarValue || window.selectedStarValue || 0, false);
 };
 
 window.selectMetric = function(btn, metricName, val) {
@@ -223,65 +205,71 @@ function initStarRating() {
         const btn = e.target.closest(".star-btn");
         if (!btn) return;
         const val = parseInt(btn.getAttribute("data-value"), 10);
-        selectedStarValue = val;
-        const inpOverall = document.getElementById("inp-overall-rating");
-        if (inpOverall) inpOverall.value = val;
-        renderStars(val, true);
-        clearError("err-overall");
-        const badge = document.getElementById("rating-feedback-label");
-        if (badge && RATING_TEXTS[val]) {
-            badge.textContent = RATING_TEXTS[val];
-            badge.classList.add("active");
-        }
-        updateProgress();
+        window.selectStar(val);
     });
 
     const stars = starsContainer.querySelectorAll(".star-btn");
     stars.forEach(btn => {
         const val = parseInt(btn.getAttribute("data-value"), 10);
         btn.addEventListener("mouseenter", () => {
-            renderStars(val, false);
-            const badge = document.getElementById("rating-feedback-label");
-            if (badge && RATING_TEXTS[val]) {
-                badge.textContent = RATING_TEXTS[val];
-                badge.classList.add("active");
-            }
+            window.hoverStar(val);
         });
     });
 
     starsContainer.addEventListener("mouseleave", () => {
-        renderStars(selectedStarValue, false);
-        const badge = document.getElementById("rating-feedback-label");
-        if (badge) {
-            if (selectedStarValue > 0 && RATING_TEXTS[selectedStarValue]) {
-                badge.textContent = RATING_TEXTS[selectedStarValue];
-                badge.classList.add("active");
-            } else {
-                badge.textContent = "Selecciona de 1 a 5 estrellas";
-                badge.classList.remove("active");
-            }
-        }
+        window.leaveStar();
     });
 }
 
 function renderStars(activeCount, isClick = false) {
+    const count = parseInt(activeCount, 10) || 0;
     const stars = document.querySelectorAll("#stars-overall .star-btn");
     stars.forEach(btn => {
         const val = parseInt(btn.getAttribute("data-value"), 10);
         const icon = btn.querySelector("i");
-        if (val <= activeCount) {
+        if (val <= count) {
             btn.classList.add("active");
-            if (isClick && icon) {
-                icon.style.animation = "none";
-                void icon.offsetWidth;
-                icon.style.animation = `starPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${(val - 1) * 0.05}s forwards`;
+            if (icon) {
+                icon.style.setProperty("color", "#f59e0b", "important");
+                icon.style.setProperty("filter", "drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 28px rgba(245, 158, 11, 0.5))", "important");
+                icon.style.setProperty("transform", "scale(1.15)", "important");
+                if (isClick) {
+                    icon.style.animation = "none";
+                    void icon.offsetWidth;
+                    icon.style.animation = `starPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${(val - 1) * 0.06}s forwards`;
+                }
             }
         } else {
             btn.classList.remove("active");
-            if (icon) icon.style.animation = "none";
+            if (icon) {
+                icon.style.setProperty("color", "rgba(255, 255, 255, 0.16)", "important");
+                icon.style.setProperty("filter", "none", "important");
+                icon.style.setProperty("transform", "scale(1)", "important");
+                icon.style.animation = "none";
+            }
         }
     });
+
+    const badge = document.getElementById("rating-feedback-label");
+    if (badge) {
+        if (count > 0 && RATING_TEXTS[count]) {
+            badge.textContent = RATING_TEXTS[count];
+            badge.classList.add("active");
+            badge.style.setProperty("border-color", "#f59e0b", "important");
+            badge.style.setProperty("color", "#fef08a", "important");
+            badge.style.setProperty("background", "rgba(245, 158, 11, 0.15)", "important");
+            badge.style.setProperty("box-shadow", "0 0 15px rgba(245, 158, 11, 0.4)", "important");
+        } else {
+            badge.textContent = "Selecciona de 1 a 5 estrellas";
+            badge.classList.remove("active");
+            badge.style.removeProperty("border-color");
+            badge.style.removeProperty("color");
+            badge.style.removeProperty("background");
+            badge.style.removeProperty("box-shadow");
+        }
+    }
 }
+window.renderStars = renderStars;
 
 // =========================================================================
 // 4. RATINGS SEGMENTADOS (LOGÍSTICA 1-5)
