@@ -1,43 +1,33 @@
-/**
+﻿/**
  * STUDENTS GAMING FESTIVAL 2026 (SGF 2026)
  * Sistema: Webhook de Feedback + Dashboard API + Envío de Validación Personal
  * CEIT & PUCMM
  *
  * ============================================================================
- * CONFIGURACIÓN DE TU CORREO DE VALIDACIÓN:
- * ============================================================================
- */
-var MI_CORREO_VALIDACION = "dauryrodriguez2005@gmail.com"; // Correo oficial de prueba
-var MI_GAMERTAG = "Daury (Organizador)";
-
-/**
- * ============================================================================
- * GUÍA RÁPIDA PARA ENVIARTE LA PRUEBA A TI MISMO:
- * ============================================================================
- * OPCIÓN 1 (Desde el editor de Apps Script):
- *   1. Cambia 'tu_correo@gmail.com' en la línea 10 por tu dirección real.
- *   2. En la barra superior selecciona la función 'enviarPruebaDirecta'.
- *   3. Haz clic en 'Ejecutar'.
- *   4. Si es la primera vez, autoriza los permisos de Gmail.
- *   5. ¡Listo! Recibirás el correo en segundos.
- *
- * OPCIÓN 2 (Desde la Hoja de Google Sheets):
- *   1. Recarga la hoja en tu navegador.
- *   2. Verás el menú arriba: "🎮 SGF 2026 Feedback" > "✉️ Enviar Correo de Prueba a Mí...".
- *   3. Escribe tu correo en la ventana emergente y presiona Aceptar.
- *
- * ============================================================================
- * POLÍTICA ANTI-DUPLICADOS (LLENADO ÚNICO POR CORREO):
- * ============================================================================
- * - Cada participante que reciba su correo solo puede llenar la encuesta 1 vez.
- * - Tanto el sitio web como este script verifican si el correo ya fue registrado.
- * - Si un participante intenta enviar nuevamente, se bloquea el reenvío y se
- *   le muestra directamente la pantalla de confirmación.
+ * CORREO CONFIGURADO PARA TU PRUEBA:
+ * dauryrodriguez2005@gmail.com
  * ============================================================================
  */
 
 // ============================================================================
-// 1. RECEPTOR WEBHOOK (doPost) - Recibe las respuestas y evita duplicados
+// 1. FUNCIÓN PRINCIPAL DE PRUEBA (COLOCADA DE PRIMERA PARA EJECUCIÓN DIRECTA)
+// ============================================================================
+/**
+ * Solo haz clic en 'Ejecutar' en la barra superior de Apps Script.
+ * Esta función se ejecutará por defecto y te enviará el correo de prueba.
+ */
+function enviarPruebaDirecta() {
+  var emailDestino = "dauryrodriguez2005@gmail.com";
+  var gamertag = "Daury (Organizador)";
+
+  Logger.log("⏳ Preparando correo oficial para: " + emailDestino + "...");
+  enviarCorreoIndividual(emailDestino, gamertag);
+  Logger.log("🚀 ¡CORREO ENVIADO CON ÉXITO A: " + emailDestino + "!");
+  Logger.log("Revisa tu bandeja de entrada o spam.");
+}
+
+// ============================================================================
+// 2. RECEPTOR WEBHOOK (doPost) - Recibe las respuestas y evita duplicados
 // ============================================================================
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -126,7 +116,7 @@ function doPost(e) {
 }
 
 // ============================================================================
-// 2. API DASHBOARD + VALIDACIÓN DE CORREO ÚNICO (doGet)
+// 3. API DASHBOARD + VALIDACIÓN DE CORREO ÚNICO (doGet)
 // ============================================================================
 function doGet(e) {
   try {
@@ -198,7 +188,7 @@ function doGet(e) {
 }
 
 // ============================================================================
-// 3. MENÚ PERSONALIZADO EN GOOGLE SHEETS
+// 4. MENÚ PERSONALIZADO EN GOOGLE SHEETS
 // ============================================================================
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -209,27 +199,6 @@ function onOpen() {
     .addToUi();
 }
 
-// ============================================================================
-// 4. ENVÍO DE PRUEBA DIRECTA (DESDE EL EDITOR)
-// ============================================================================
-function enviarPruebaDirecta() {
-  if (!MI_CORREO_VALIDACION || MI_CORREO_VALIDACION === "tu_correo@gmail.com" || MI_CORREO_VALIDACION.indexOf("@") === -1) {
-    var errorMsg = "⚠️ Por favor escribe tu correo real en la variable 'MI_CORREO_VALIDACION' en la línea 11 de este código.";
-    Logger.log(errorMsg);
-    try {
-      SpreadsheetApp.getUi().alert("Configuración Requerida", errorMsg, SpreadsheetApp.getUi().ButtonSet.OK);
-    } catch(e) {}
-    return;
-  }
-
-  Logger.log("Enviando correo de validación a: " + MI_CORREO_VALIDACION + "...");
-  enviarCorreoIndividual(MI_CORREO_VALIDACION, MI_GAMERTAG);
-  Logger.log("✅ ¡Correo de prueba enviado con éxito a: " + MI_CORREO_VALIDACION + "!");
-}
-
-// ============================================================================
-// 5. ACCIONES DEL MENÚ DE GOOGLE SHEETS
-// ============================================================================
 function menuEnviarPrueba() {
   var ui = SpreadsheetApp.getUi();
   var promptRes = ui.prompt(
@@ -242,7 +211,7 @@ function menuEnviarPrueba() {
     return;
   }
 
-  var emailDestino = promptRes.getResponseText().trim();
+  var emailDestino = promptRes.getResponseText().trim() || "dauryrodriguez2005@gmail.com";
   if (!emailDestino || emailDestino.indexOf("@") === -1) {
     ui.alert("⚠️ Correo Inválido", "Por favor ingresa una dirección de correo válida.", ui.ButtonSet.OK);
     return;
@@ -272,7 +241,7 @@ function menuConsultarCuota() {
 }
 
 // ============================================================================
-// 6. DISPATCHER DE CORREO ELECTRÓNICO (GmailApp)
+// 5. DISPATCHER DE CORREO ELECTRÓNICO (GmailApp + MailApp Fallback)
 // ============================================================================
 function enviarCorreoIndividual(destinatario, gamertag) {
   var tag = gamertag || "Competidor SGF";
@@ -289,14 +258,25 @@ function enviarCorreoIndividual(destinatario, gamertag) {
     "Tiempo estimado: 1 minuto.\n\n" +
     "Comité Organizador Oficial SGF 2026 • CEIT & PUCMM";
 
-  GmailApp.sendEmail(destinatario, asunto, textoPlano, {
-    htmlBody: htmlTemplate,
-    name: "CEIT - Students Gaming Festival 2026"
-  });
+  try {
+    GmailApp.sendEmail(destinatario, asunto, textoPlano, {
+      htmlBody: htmlTemplate,
+      name: "CEIT - Students Gaming Festival 2026"
+    });
+  } catch (e1) {
+    Logger.log("Aviso GmailApp, intentando con MailApp: " + e1.toString());
+    MailApp.sendEmail({
+      to: destinatario,
+      subject: asunto,
+      body: textoPlano,
+      htmlBody: htmlTemplate,
+      name: "CEIT - Students Gaming Festival 2026"
+    });
+  }
 }
 
 // ============================================================================
-// 7. GENERADOR DE PLANTILLA HTML OFICIAL CYBERPUNK
+// 6. GENERADOR DE PLANTILLA HTML OFICIAL CYBERPUNK
 // ============================================================================
 function obtenerPlantillaEmailHtml(gamertag, email) {
   var baseHtml = "\u003c!DOCTYPE html\u003e\n\u003chtml lang=\"es\"\u003e\n\u003chead\u003e\n    \u003cmeta charset=\"UTF-8\"\u003e\n    \u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"\u003e\n    \u003ctitle\u003eEvaluación Oficial de Experiencia • Students Gaming Festival 2026\u003c/title\u003e\n    \u003c!--[if mso]\u003e\n    \u003cstyle type=\"text/css\"\u003e\n      body, table, td, p, a { font-family: \u0027Segoe UI\u0027, Arial, sans-serif !important; }\n    \u003c/style\u003e\n    \u003c![endif]--\u003e\n\u003c/head\u003e\n\u003cbody style=\"margin: 0; padding: 0; background-color: #05020a; font-family: -apple-system, BlinkMacSystemFont, \u0027Segoe UI\u0027, Roboto, \u0027Helvetica Neue\u0027, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; color: #e4e4e7;\"\u003e\n\n    \u003c!-- Pre-header invisible para visualización en bandeja de entrada --\u003e\n    \u003cdiv style=\"display: none; font-size: 1px; color: #05020a; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;\"\u003e\n        Consulta Oficial de Competidores: Tu evaluación define los estándares, setups y juegos del SGF 2027.\n    \u003c/div\u003e\n\n    \u003c!-- Wrapper Exterior --\u003e\n    \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"background-color: #05020a; min-height: 100vh; padding: 36px 12px;\"\u003e\n        \u003ctr\u003e\n            \u003ctd align=\"center\"\u003e\n\n                \u003c!-- Tarjeta Principal (Máximo 620px) --\u003e\n                \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width: 620px; background: #0c0418; border: 1px solid rgba(168, 85, 247, 0.32); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);\"\u003e\n                    \n                    \u003c!-- Línea de Acento Neón Superior --\u003e\n                    \u003ctr\u003e\n                        \u003ctd height=\"4\" style=\"background: linear-gradient(90deg, #a855f7 0%, #06b6d4 50%, #f59e0b 100%);\"\u003e\u003c/td\u003e\n                    \u003c/tr\u003e\n\n                    \u003c!-- Cabecera Institucional con Logo Oficial --\u003e\n                    \u003ctr\u003e\n                        \u003ctd align=\"center\" style=\"padding: 40px 30px 24px 30px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.14) 0%, transparent 100%);\"\u003e\n                            \n                            \u003c!-- Logo Oficial del Festival --\u003e\n                            \u003cimg src=\"https://sgf26-feedback.vercel.app/images/logo.png\" alt=\"Students Gaming Festival 2026\" width=\"170\" style=\"display: block; max-width: 170px; height: auto; margin: 0 auto 20px auto; border: 0; outline: none; filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.5));\"\u003e\n\n                            \u003c!-- Badge de Categoría Oficial --\u003e\n                            \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"\u003e\n                                \u003ctr\u003e\n                                    \u003ctd style=\"background: rgba(168, 85, 247, 0.16); border: 1px solid rgba(168, 85, 247, 0.45); border-radius: 9999px; padding: 5px 18px; text-align: center;\"\u003e\n                                        \u003cspan style=\"font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #c084fc; text-transform: uppercase;\"\u003e\n                                            COMUNICADO OFICIAL • CEIT\n                                        \u003c/span\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/table\u003e\n\n                            \u003ch1 style=\"margin: 18px 0 6px 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; line-height: 1.25;\"\u003e\n                                EVALUACIÓN OFICIAL DE EXPERIENCIA\n                            \u003c/h1\u003e\n                            \u003cp style=\"margin: 0; font-size: 13px; color: #94a3b8; letter-spacing: 0.5px;\"\u003e\n                                Students Gaming Festival 2026 • CEIT \u0026 PUCMM\n                            \u003c/p\u003e\n                        \u003c/td\u003e\n                    \u003c/tr\u003e\n\n                    \u003c!-- Separador de Precisión --\u003e\n                    \u003ctr\u003e\n                        \u003ctd style=\"padding: 0 40px;\"\u003e\n                            \u003cdiv style=\"height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.45) 50%, transparent 100%);\"\u003e\u003c/div\u003e\n                        \u003c/td\u003e\n                    \u003c/tr\u003e\n\n                    \u003c!-- Cuerpo Principal del Correo --\u003e\n                    \u003ctr\u003e\n                        \u003ctd style=\"padding: 32px 42px 20px 42px; color: #e4e4e7; font-size: 15px; line-height: 1.75;\"\u003e\n                            \n                            \u003cp style=\"margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #ffffff;\"\u003e\n                                Estimado/a participante \u003cspan style=\"color: #c084fc;\"\u003e{{GamerTag}}\u003c/span\u003e:\n                            \u003c/p\u003e\n\n                            \u003cp style=\"margin: 0 0 16px 0; color: #d4d4d8;\"\u003e\n                                En nombre del Comité Organizador del \u003cstrong\u003eStudents Gaming Festival 2026\u003c/strong\u003e, el \u003cstrong\u003eCEIT\u003c/strong\u003e y la \u003cstrong\u003ePUCMM\u003c/strong\u003e, agradecemos tu destacada participación y entrega competitiva en esta edición.\n                            \u003c/p\u003e\n\n                            \u003cp style=\"margin: 0 0 24px 0; color: #a1a1aa;\"\u003e\n                                Con el propósito de perfeccionar la infraestructura técnica, el flujo de partidas y la calidad de los setups para el \u003cstrong\u003eSGF 2027\u003c/strong\u003e, hemos habilitado la Consulta Oficial de Satisfacción para todos los competidores registrados.\n                            \u003c/p\u003e\n\n                            \u003c!-- Cuadrícula Ejecutiva de 3 Ejes de Evaluación con SVG Vectoriales --\u003e\n                            \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin: 0 0 26px 0; background: rgba(16, 7, 30, 0.85); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 12px; overflow: hidden;\"\u003e\n                                \u003ctr\u003e\n                                    \u003c!-- Eje 1: Calidad Competitiva --\u003e\n                                    \u003ctd width=\"33%\" style=\"text-align: center; padding: 18px 12px; border-right: 1px solid rgba(255, 255, 255, 0.06);\" valign=\"top\"\u003e\n                                        \u003cdiv style=\"margin-bottom: 8px;\"\u003e\n                                            \u003csvg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fbbf24\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display: inline-block;\"\u003e\n                                                \u003cpath d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/\u003e\n                                                \u003cpath d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/\u003e\n                                                \u003cpath d=\"M4 22h16\"/\u003e\n                                                \u003cpath d=\"M10 14.66V17c0 .55-.45 1-1 1H8v2h8v-2h-1c-.55 0-1-.45-1-1v-2.34\"/\u003e\n                                                \u003cpath d=\"M6 4h12v7a6 6 0 0 1-12 0V4Z\"/\u003e\n                                            \u003c/svg\u003e\n                                        \u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 12px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;\"\u003eDesempeño\u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;\"\u003eFlujo de llaves y arbitraje oficial\u003c/div\u003e\n                                    \u003c/td\u003e\n\n                                    \u003c!-- Eje 2: Infraestructura Técnica --\u003e\n                                    \u003ctd width=\"33%\" style=\"text-align: center; padding: 18px 12px; border-right: 1px solid rgba(255, 255, 255, 0.06);\" valign=\"top\"\u003e\n                                        \u003cdiv style=\"margin-bottom: 8px;\"\u003e\n                                            \u003csvg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#06b6d4\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display: inline-block;\"\u003e\n                                                \u003crect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"6\"/\u003e\n                                                \u003cpath d=\"M6 12h4m-2-2v4\"/\u003e\n                                                \u003ccircle cx=\"15\" cy=\"11\" r=\"1\" fill=\"#06b6d4\"/\u003e\n                                                \u003ccircle cx=\"18\" cy=\"13\" r=\"1\" fill=\"#06b6d4\"/\u003e\n                                            \u003c/svg\u003e\n                                        \u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 12px; font-weight: 800; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.5px;\"\u003eHardware\u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;\"\u003eConsolas, monitores y conectividad\u003c/div\u003e\n                                    \u003c/td\u003e\n\n                                    \u003c!-- Eje 3: Visión y Mejoras 2027 --\u003e\n                                    \u003ctd width=\"33%\" style=\"text-align: center; padding: 18px 12px;\" valign=\"top\"\u003e\n                                        \u003cdiv style=\"margin-bottom: 8px;\"\u003e\n                                            \u003csvg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#c084fc\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display: inline-block;\"\u003e\n                                                \u003cpath d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/\u003e\n                                                \u003cpath d=\"M9 18h6\"/\u003e\n                                                \u003cpath d=\"M10 22h4\"/\u003e\n                                            \u003c/svg\u003e\n                                        \u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 12px; font-weight: 800; color: #c084fc; text-transform: uppercase; letter-spacing: 0.5px;\"\u003eSGF 2027\u003c/div\u003e\n                                        \u003cdiv style=\"font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4;\"\u003eNuevos títulos y sugerencias\u003c/div\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/table\u003e\n\n                            \u003c!-- Ficha Informativa de Seguridad y Tiempo --\u003e\n                            \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin: 0 0 30px 0; background: rgba(255, 255, 255, 0.02); border-left: 3px solid #06b6d4; padding: 12px 16px; border-radius: 0 8px 8px 0;\"\u003e\n                                \u003ctr\u003e\n                                    \u003ctd\u003e\n                                        \u003cdiv style=\"font-size: 12px; color: #94a3b8; line-height: 1.6;\"\u003e\n                                            \u003cspan style=\"display: inline-block; margin-right: 18px;\"\u003e\n                                                \u003csvg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align: -2px; margin-right: 5px;\"\u003e\u003ccircle cx=\"12\" cy=\"12\" r=\"10\"/\u003e\u003cpolyline points=\"12 6 12 12 16 14\"/\u003e\u003c/svg\u003e\n                                                Tiempo estimado: \u003cstrong style=\"color: #ffffff;\"\u003e1 min\u003c/strong\u003e\n                                            \u003c/span\u003e\n                                            \u003cspan style=\"display: inline-block;\"\u003e\n                                                \u003csvg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align: -2px; margin-right: 5px;\"\u003e\u003cpath d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/\u003e\u003cpath d=\"m9 12 2 2 4-4\"/\u003e\u003c/svg\u003e\n                                                Tratamiento: \u003cstrong style=\"color: #ffffff;\"\u003eDatos confidenciales y seguros\u003c/strong\u003e\n                                            \u003c/span\u003e\n                                        \u003c/div\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/table\u003e\n\n                            \u003c!-- Botón de Llamado a la Acción --\u003e\n                            \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin: 10px 0 20px 0;\"\u003e\n                                \u003ctr\u003e\n                                    \u003ctd align=\"center\"\u003e\n                                        \u003ca href=\"https://sgf26-feedback.vercel.app/?gamertag={{GamerTag}}\u0026email={{Email}}\" target=\"_blank\" style=\"display: inline-block; background: linear-gradient(135deg, #9333ea 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 800; letter-spacing: 1px; padding: 17px 42px; border-radius: 8px; box-shadow: 0 8px 30px rgba(147, 51, 234, 0.45); text-transform: uppercase;\"\u003e\n                                            COMPLETAR EVALUACIÓN DE EXPERIENCIA\n                                        \u003c/a\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/table\u003e\n\n                        \u003c/td\u003e\n                    \u003c/tr\u003e\n\n                    \u003c!-- Firma Institucional --\u003e\n                    \u003ctr\u003e\n                        \u003ctd style=\"padding: 20px 42px 35px 42px; color: #a1a1aa; font-size: 13px; line-height: 1.6; border-top: 1px solid rgba(255, 255, 255, 0.06);\"\u003e\n                            \u003cp style=\"margin: 0 0 4px 0; color: #ffffff; font-weight: 700; font-size: 14px;\"\u003e\n                                Comité Organizador Oficial • SGF 2026\n                            \u003c/p\u003e\n                            \u003cp style=\"margin: 0; color: #94a3b8; font-size: 12px;\"\u003e\n                                Comité de Estudiantes de Ingeniería Telemática - CEIT\u003cbr\u003e\n                                Pontificia Universidad Católica Madre y Maestra - PUCMM\n                            \u003c/p\u003e\n                        \u003c/td\u003e\n                    \u003c/tr\u003e\n\n                    \u003c!-- Footer Oficial con Logos Institucionales --\u003e\n                    \u003ctr\u003e\n                        \u003ctd align=\"center\" style=\"background-color: #06020c; padding: 26px 30px; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 11px; color: #52525b; line-height: 1.6;\"\u003e\n                            \n                            \u003c!-- Logos PUCMM y CEIT --\u003e\n                            \u003ctable role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom: 14px;\"\u003e\n                                \u003ctr\u003e\n                                    \u003ctd style=\"padding: 0 12px;\"\u003e\n                                        \u003cimg src=\"https://sgf26-feedback.vercel.app/images/pucmm.png\" alt=\"PUCMM\" height=\"26\" style=\"display: block; opacity: 0.65; border: 0; filter: grayscale(30%);\"\u003e\n                                    \u003c/td\u003e\n                                    \u003ctd style=\"color: rgba(255, 255, 255, 0.2); font-size: 14px;\"\u003e•\u003c/td\u003e\n                                    \u003ctd style=\"padding: 0 12px;\"\u003e\n                                        \u003cimg src=\"https://sgf26-feedback.vercel.app/images/ceit.png\" alt=\"CEIT\" height=\"26\" style=\"display: block; opacity: 0.65; border: 0; filter: grayscale(30%);\"\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/table\u003e\n\n                            \u003cp style=\"margin: 0 0 4px 0;\"\u003e\n                                Este mensaje institucional fue enviado a los participantes registrados del Students Gaming Festival 2026.\n                            \u003c/p\u003e\n                            \u003cp style=\"margin: 0; color: #71717a;\"\u003e\n                                © 2026 Students Gaming Festival. Todos los derechos reservados.\u003cbr\u003e\n                                PUCMM, Campus Santiago • República Dominicana.\n                            \u003c/p\u003e\n                        \u003c/td\u003e\n                    \u003c/tr\u003e\n\n                \u003c/table\u003e\n\n            \u003c/td\u003e\n        \u003c/tr\u003e\n    \u003c/table\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e\n";
