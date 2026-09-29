@@ -30,63 +30,9 @@
     <div class="ambient-glow glow-bottom-center"></div>
 
     <!-- =========================================================================
-         1. PANTALLA DE ACCESO DE SEGURIDAD (ADMIN LOGIN GATE)
+         DASHBOARD EJECUTIVO SGF 2026 (ACCESO DIRECTO)
          ========================================================================= -->
-    <div id="login-screen" class="login-screen">
-        <div class="login-card">
-            <div class="login-brand">
-                <img src="images/logo.png" alt="SGF 2026 Logo" class="login-logo" onerror="this.style.display='none'">
-                <div class="login-badge-tag">
-                    <i class="fa-solid fa-lock"></i> ACCESO RESTRINGIDO • COMITÉ SGF 2026
-                </div>
-                <h1 class="login-title">PANEL <span class="gradient-text">ANALÍTICO</span></h1>
-                <p class="login-desc">Ingresa tus credenciales administrativas para visualizar las métricas y respuestas oficiales en tiempo real.</p>
-            </div>
-
-            <form id="login-form" class="login-form" novalidate>
-                <div class="form-group-login">
-                    <label for="admin-user"><i class="fa-solid fa-user-shield"></i> Usuario Administrativo</label>
-                    <input type="text" id="admin-user" class="login-input" placeholder="admin" required autocomplete="username">
-                </div>
-
-                <div class="form-group-login">
-                    <label for="admin-pass"><i class="fa-solid fa-key"></i> Contraseña de Acceso</label>
-                    <div class="password-field-wrapper">
-                        <input type="password" id="admin-pass" class="login-input" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-password" id="btn-toggle-password" title="Ver contraseña">
-                            <i class="fa-regular fa-eye" id="toggle-pass-icon"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="login-options-row">
-                    <label class="remember-chk-label">
-                        <input type="checkbox" id="chk-remember-session" checked> Recordar sesión en este equipo
-                    </label>
-                </div>
-
-                <div class="login-alert-msg" id="login-error-msg">
-                    <i class="fa-solid fa-triangle-exclamation"></i> <span id="login-error-text">Usuario o contraseña incorrectos.</span>
-                </div>
-
-                <button type="submit" class="btn-submit-login" id="btn-submit-login">
-                    <span>Desbloquear Dashboard</span>
-                    <i class="fa-solid fa-unlock"></i>
-                </button>
-            </form>
-
-            <div class="login-footer-links">
-                <a href="index.html" class="link-back-survey">
-                    <i class="fa-solid fa-arrow-left"></i> Volver al formulario de competidores
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         2. DASHBOARD EJECUTIVO (SOLO VISIBLE TRAS AUTENTICARSE)
-         ========================================================================= -->
-    <div id="dashboard-app" class="dashboard-app-wrapper" style="display: none;">
+    <div id="dashboard-app" class="dashboard-app-wrapper">
 
         <!-- Header Principal del Dashboard -->
         <header class="dash-topbar">
@@ -110,9 +56,6 @@
                 <a href="index.html" class="dash-btn btn-survey" title="Ir al formulario de competidores">
                     <i class="fa-solid fa-clipboard-question"></i> Formulario
                 </a>
-                <button type="button" class="dash-btn btn-logout" id="btn-logout" title="Cerrar Sesión Segura">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
-                </button>
             </div>
         </header>
 
@@ -401,6 +344,6 @@
         </main>
     </div>
 
-    <script src="dashboard.js?v=5.0"></script>
+    <script src="dashboard.js?v=6.0"></script>
 </body>
 </html>
