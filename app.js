@@ -54,15 +54,73 @@ let selectedStarValue = 0;
 // =========================================================================
 // FUNCIONES GLOBALES DE INTERACCIÓN DIRECTA (INLINE ONCLICK HANDLERS)
 // =========================================================================
-window.selectGameCard = function(el) {
-    document.querySelectorAll(".game-card-option").forEach(c => c.classList.remove("selected"));
-    el.classList.add("selected");
-    const gameName = el.getAttribute("data-game-name") || "";
+window.syncSelectedGames = function() {
+    const selected = Array.from(document.querySelectorAll(".game-card-option.selected")).map(c => {
+        return c.getAttribute("data-game-name") || "";
+    }).filter(Boolean);
+
     const inp = document.getElementById("inp-selected-game");
-    if (inp) inp.value = gameName;
+    if (inp) inp.value = selected.join(", ");
+
+    const badge = document.getElementById("game-selection-badge");
+    if (badge) {
+        const count = selected.length;
+        if (count === 0) {
+            badge.innerHTML = '<i class="fa-solid fa-gamepad"></i> Selecciona 1 o 2 juegos';
+            badge.style.borderColor = "rgba(168, 85, 247, 0.4)";
+            badge.style.color = "#c084fc";
+        } else if (count === 1) {
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 1 seleccionado (puedes elegir otro)';
+            badge.style.borderColor = "rgba(6, 182, 212, 0.6)";
+            badge.style.color = "#67e8f9";
+        } else {
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 2 de 2 seleccionados (Máximo)';
+            badge.style.borderColor = "rgba(16, 185, 129, 0.8)";
+            badge.style.color = "#34d399";
+        }
+    }
+};
+
+window.selectGameCard = function(el) {
+    if (!el) return;
+    const isSpectator = el.getAttribute("data-game-key") === "espectador";
+    const isCurrentlySelected = el.classList.contains("selected");
+
+    if (isSpectator) {
+        if (isCurrentlySelected) {
+            el.classList.remove("selected");
+        } else {
+            document.querySelectorAll(".game-card-option").forEach(c => c.classList.remove("selected"));
+            el.classList.add("selected");
+        }
+    } else {
+        const spectatorCard = document.querySelector('.game-card-option[data-game-key="espectador"]');
+        if (spectatorCard) spectatorCard.classList.remove("selected");
+
+        if (isCurrentlySelected) {
+            el.classList.remove("selected");
+        } else {
+            const currentSelected = document.querySelectorAll(".game-card-option.selected");
+            if (currentSelected.length >= 2) {
+                if (typeof showToast === "function") {
+                    showToast("⚠️ El festival permitía un máximo de 2 torneos por participante. Deselecciona uno para cambiarlo.", "warning");
+                }
+                const badgeEl = document.getElementById("game-selection-badge");
+                if (badgeEl) {
+                    badgeEl.style.animation = "shake 0.4s ease";
+                    setTimeout(() => { badgeEl.style.animation = ""; }, 400);
+                }
+                return;
+            }
+            el.classList.add("selected");
+        }
+    }
+
+    window.syncSelectedGames();
     clearError("err-game");
     updateProgress();
 };
+window.selectGameOption = window.selectGameCard;
 
 window.selectStar = function(val) {
     const parsed = parseInt(val, 10) || 0;
@@ -225,78 +283,10 @@ function initUrlParams() {
 // 2. SELECTOR DE JUEGOS / TORNEOS (HASTA 2 SELECCIONABLES)
 // =========================================================================
 function initGameSelector() {
-    syncSelectedGames();
-}
-
-function selectGameCard(el) {
-    if (!el) return;
-    const isSpectator = el.getAttribute("data-game-key") === "espectador";
-    const isCurrentlySelected = el.classList.contains("selected");
-
-    if (isSpectator) {
-        if (isCurrentlySelected) {
-            el.classList.remove("selected");
-        } else {
-            document.querySelectorAll(".game-card-option").forEach(c => c.classList.remove("selected"));
-            el.classList.add("selected");
-        }
-    } else {
-        const spectatorCard = document.querySelector('.game-card-option[data-game-key="espectador"]');
-        if (spectatorCard) spectatorCard.classList.remove("selected");
-
-        if (isCurrentlySelected) {
-            el.classList.remove("selected");
-        } else {
-            const currentSelected = document.querySelectorAll(".game-card-option.selected");
-            if (currentSelected.length >= 2) {
-                if (typeof showToast === "function") {
-                    showToast("⚠️ El festival permitía un máximo de 2 torneos por participante. Deselecciona uno para cambiarlo.", "warning");
-                }
-                const badgeEl = document.getElementById("game-selection-badge");
-                if (badgeEl) {
-                    badgeEl.style.animation = "shake 0.4s ease";
-                    setTimeout(() => { badgeEl.style.animation = ""; }, 400);
-                }
-                return;
-            }
-            el.classList.add("selected");
-        }
-    }
-
-    syncSelectedGames();
-    clearError("err-game");
-    updateProgress();
-}
-window.selectGameCard = selectGameCard;
-window.selectGameOption = selectGameCard;
-
-function syncSelectedGames() {
-    const selected = Array.from(document.querySelectorAll(".game-card-option.selected")).map(c => {
-        return c.getAttribute("data-game-name") || "";
-    }).filter(Boolean);
-
-    const inp = document.getElementById("inp-selected-game");
-    if (inp) inp.value = selected.join(", ");
-
-    const badge = document.getElementById("game-selection-badge");
-    if (badge) {
-        const count = selected.length;
-        if (count === 0) {
-            badge.innerHTML = '<i class="fa-solid fa-gamepad"></i> Selecciona 1 o 2 juegos';
-            badge.style.borderColor = "rgba(168, 85, 247, 0.4)";
-            badge.style.color = "#c084fc";
-        } else if (count === 1) {
-            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 1 seleccionado (puedes elegir otro)';
-            badge.style.borderColor = "rgba(6, 182, 212, 0.6)";
-            badge.style.color = "#67e8f9";
-        } else {
-            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 2 de 2 seleccionados (Máximo)';
-            badge.style.borderColor = "rgba(16, 185, 129, 0.8)";
-            badge.style.color = "#34d399";
-        }
+    if (typeof window.syncSelectedGames === "function") {
+        window.syncSelectedGames();
     }
 }
-window.syncSelectedGames = syncSelectedGames;
 
 // =========================================================================
 // 3. ESTRELLAS NEÓN DE CALIFICACIÓN GENERAL (ESTABLE SIN JITTER)
