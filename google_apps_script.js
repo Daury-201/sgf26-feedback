@@ -11,6 +11,21 @@
 
 var MI_CORREO_VALIDACION = "rafaeldario1961@gmail.com";
 var MI_GAMERTAG = "Rafael";
+var SPREADSHEET_ID = "1l0E2qpvKP7cuDbFdmLUlAfkmc0gi1iYV57yaa067-d0";
+
+/**
+ * Conexión fija y segura al Google Sheet oficial
+ */
+function obtenerHojaCalculo() {
+  if (SPREADSHEET_ID && SPREADSHEET_ID.trim() !== "") {
+    try {
+      return SpreadsheetApp.openById(SPREADSHEET_ID);
+    } catch (e) {
+      Logger.log("Aviso openById: " + e.toString());
+    }
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
 
 // ============================================================================
 // 1. FUNCIÓN PRINCIPAL DE PRUEBA (EJECUCIÓN DIRECTA)
@@ -40,7 +55,7 @@ function doPost(e) {
   lock.tryLock(10000);
 
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = obtenerHojaCalculo();
     var sheet = ss.getSheetByName("Respuestas");
     if (!sheet) {
       sheet = ss.insertSheet("Respuestas", 0);
@@ -133,7 +148,7 @@ function doGet(e) {
   }
 
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = obtenerHojaCalculo();
     var sheet = ss.getSheetByName("Respuestas") || ss.getSheets()[0];
 
     // Endpoint de Verificación en Tiempo Real: ?checkEmail=correo@ejemplo.com
@@ -218,7 +233,7 @@ function onOpen() {
  * Puedes ejecutarla directamente desde el botón 'Ejecutar' o desde el menú de la hoja.
  */
 function reiniciarHojaDesdeCero() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = obtenerHojaCalculo();
   
   // 1. Obtener o crear pestaña 'Respuestas'
   var sheet = ss.getSheetByName("Respuestas");
