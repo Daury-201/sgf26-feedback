@@ -82,7 +82,34 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("SGF 2026 Feedback Webhook Activo.");
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: "success", count: 0, data: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var headers = rows[0];
+    var results = [];
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var item = {};
+      for (var j = 0; j < headers.length; j++) {
+        item[headers[j]] = row[j];
+      }
+      results.push(item);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "success", count: results.length, data: results }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 /**
