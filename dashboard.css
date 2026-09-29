@@ -48,14 +48,23 @@
     padding: 0;
 }
 
-body.dashboard-body {
+html, body.dashboard-body {
     background-color: var(--bg-dark);
     color: var(--text-light);
     font-family: var(--font-body);
     min-height: 100vh;
+    width: 100%;
+    max-width: 100%;
     position: relative;
     overflow-x: hidden;
     line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+}
+
+.dashboard-app-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Luces ambientales */
@@ -364,6 +373,7 @@ body.dashboard-body {
 
 .kpi-body {
     flex: 1;
+    min-width: 0;
 }
 
 .kpi-label {
@@ -379,6 +389,7 @@ body.dashboard-body {
 .kpi-value-row {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 6px;
 }
@@ -441,11 +452,6 @@ body.dashboard-body {
     margin-bottom: 36px;
 }
 
-@media (max-width: 1024px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-}
 
 .chart-card {
     background: var(--bg-card);
@@ -760,12 +766,15 @@ body.dashboard-body {
 
 .table-responsive {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(168, 85, 247, 0.18);
+    width: 100%;
 }
 
 .dash-table {
     width: 100%;
+    min-width: 820px;
     border-collapse: collapse;
     font-size: 0.82rem;
     text-align: left;
@@ -944,6 +953,369 @@ body.dashboard-body {
 .partner-logo:hover {
     opacity: 1;
     filter: grayscale(0);
+}
+
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVE AVANZADA (MÓVILES, TABLETS Y PANTALLAS PEQUEÑAS)
+   ========================================================================== */
+
+/* Breakpoint Tablet (<= 1024px) */
+@media (max-width: 1024px) {
+    .dash-topbar {
+        padding: 14px 24px;
+    }
+
+    .dash-container {
+        padding: 24px 20px 70px 20px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* Breakpoint Móvil y Tablet Vertical (<= 860px) */
+@media (max-width: 860px) {
+    /* 1. Header Superior y Botones */
+    .dash-topbar {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(20px);
+        background: rgba(9, 3, 20, 0.96);
+    }
+
+    .dash-brand {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 12px;
+    }
+
+    .dash-logo {
+        height: 38px;
+    }
+
+    .dash-title {
+        font-size: 1.05rem;
+        letter-spacing: 0.2px;
+        line-height: 1.25;
+    }
+
+    .dash-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+    }
+
+    .dash-badge-live {
+        width: 100%;
+        justify-content: flex-start;
+        padding-bottom: 2px;
+        font-size: 0.7rem;
+    }
+
+    .dash-btn {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+        padding: 8px 10px;
+        font-size: 0.72rem;
+        gap: 6px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .btn-logout {
+        flex: 1 1 100%;
+    }
+
+    /* 2. Contenedor Principal */
+    .dash-container {
+        padding: 16px 14px 60px 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 3. Filtros y Búsqueda */
+    .dash-controls-card {
+        padding: 16px 14px;
+        gap: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .filter-group label {
+        font-size: 0.78rem;
+    }
+
+    .dash-select, .dash-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .search-box {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .data-source-toggle {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .source-tag {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 0.72rem;
+    }
+
+    /* 4. Tarjetas KPI */
+    .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .kpi-card {
+        padding: 16px;
+        gap: 14px;
+        align-items: center;
+    }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+        border-radius: 10px;
+    }
+
+    .kpi-value {
+        font-size: 1.85rem;
+    }
+
+    .kpi-label {
+        font-size: 0.72rem;
+    }
+
+    /* 5. Gráficos */
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .chart-card {
+        padding: 16px 14px;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .chart-header h3 {
+        font-size: 0.95rem;
+    }
+
+    .chart-header p {
+        font-size: 0.74rem;
+    }
+
+    .chart-wrapper {
+        height: 250px;
+    }
+
+    /* 6. Muro de Testimonios y Sugerencias */
+    .feedback-wall-section {
+        padding: 16px 14px;
+        margin-bottom: 24px;
+    }
+
+    .section-title-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .section-title-row h2 {
+        font-size: 1.05rem;
+    }
+
+    .quotes-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .tab-pills {
+        width: 100%;
+        display: flex;
+        gap: 4px;
+    }
+
+    .pill-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 6px;
+        font-size: 0.72rem;
+        text-align: center;
+    }
+
+    .quotes-mini-nav {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .quotes-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .quote-card {
+        padding: 15px;
+    }
+
+    .quote-header {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .quotes-pagination {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+        padding-top: 14px;
+    }
+
+    .quotes-pagination .pagination-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* 7. Tabla de Competidores */
+    .table-section {
+        padding: 16px 14px;
+        margin-bottom: 24px;
+    }
+
+    .table-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .table-header-row h2 {
+        font-size: 1.05rem;
+    }
+
+    .table-actions {
+        width: 100%;
+    }
+
+    .table-actions .dash-btn-sm {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 0.76rem;
+    }
+
+    .table-pagination {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+        padding: 14px 10px;
+    }
+
+    .table-pagination .pagination-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .page-nav-btn {
+        padding: 6px 10px;
+        font-size: 0.74rem;
+    }
+
+    .page-num-btn {
+        min-width: 28px;
+        height: 28px;
+        font-size: 0.74rem;
+    }
+
+    /* 8. Footer */
+    .dash-footer {
+        padding-top: 24px;
+        font-size: 0.72rem;
+        gap: 10px;
+    }
+
+    .partner-logo {
+        height: 26px;
+        margin: 0 6px;
+    }
+}
+
+/* Pantallas Compactas de Teléfonos (<= 440px) */
+@media (max-width: 440px) {
+    .dash-title {
+        font-size: 0.9rem;
+    }
+
+    .dash-logo {
+        height: 32px;
+    }
+
+    .dash-btn {
+        font-size: 0.68rem;
+        padding: 7px 6px;
+    }
+
+    .kpi-value {
+        font-size: 1.65rem;
+    }
+
+    .chart-wrapper {
+        height: 220px;
+    }
+
+    .login-screen {
+        padding: 12px;
+    }
+
+    .login-card {
+        padding: 24px 16px 20px 16px;
+        border-radius: 14px;
+    }
+
+    .login-title {
+        font-size: 1.35rem;
+    }
 }
 
 /* ==========================================================================
