@@ -1,44 +1,43 @@
 /**
  * STUDENTS GAMING FESTIVAL 2026 (SGF 2026)
- * Sistema Integrado: Webhook de Feedback + Dashboard API + Despacho de Correos Masivos
+ * Sistema: Webhook de Feedback + Dashboard API + Envío de Validación Personal
  * CEIT & PUCMM
  *
  * ============================================================================
- * GUÍA DE INSTALACIÓN RÁPIDA:
+ * CONFIGURACIÓN DE TU CORREO DE VALIDACIÓN:
  * ============================================================================
- * 1. Abre tu Google Sheet del feedback: https://sheets.new
- * 2. En el menú superior: Extensiones > Apps Script.
- * 3. Borra todo el código que esté allí y pega este archivo COMPLETO.
- * 4. Haz clic en 'Guardar' (icono de disquete).
- * 
+ */
+var MI_CORREO_VALIDACION = "tu_correo@gmail.com"; // <-- ESCRIBE AQUÍ TU CORREO PARA PROBAR
+var MI_GAMERTAG = "Daury (Organizador)";         // <-- TU NOMBRE O GAMERTAG
+
+/**
  * ============================================================================
- * CÓMO PROBAR ENVIÁNDOTE UN CORREO A TI PRIMERO:
+ * GUÍA RÁPIDA PARA ENVIARTE LA PRUEBA A TI MISMO:
  * ============================================================================
- * MÉTODO 1 (Desde la Hoja de Google Sheets):
- *   - Recarga tu hoja de Google Sheets en el navegador.
- *   - Verás un nuevo menú arriba a la derecha: "🎮 SGF 2026 Feedback".
- *   - Haz clic en: "✉️ Enviar Correo de Prueba a Mí...".
- *   - Ingresa tu correo y ¡listo! Revisa tu bandeja de entrada o spam.
+ * OPCIÓN 1 (Desde el editor de Apps Script):
+ *   1. Cambia 'tu_correo@gmail.com' en la línea 10 por tu dirección real.
+ *   2. En la barra superior selecciona la función 'enviarPruebaDirecta'.
+ *   3. Haz clic en 'Ejecutar'.
+ *   4. Si es la primera vez, autoriza los permisos de Gmail.
+ *   5. ¡Listo! Recibirás el correo en segundos.
  *
- * MÉTODO 2 (Desde este editor de Apps Script):
- *   - Busca la función 'enviarPruebaDirecta' (en la línea ~120 de este código).
- *   - Cambia 'tu_correo@gmail.com' por tu correo real.
- *   - En la barra superior de Apps Script selecciona 'enviarPruebaDirecta' y haz clic en 'Ejecutar'.
+ * OPCIÓN 2 (Desde la Hoja de Google Sheets):
+ *   1. Recarga la hoja en tu navegador.
+ *   2. Verás el menú arriba: "🎮 SGF 2026 Feedback" > "✉️ Enviar Correo de Prueba a Mí...".
+ *   3. Escribe tu correo en la ventana emergente y presiona Aceptar.
  *
  * ============================================================================
- * CÓMO ENVIAR A LOS 171 PARTICIPANTES:
+ * POLÍTICA ANTI-DUPLICADOS (LLENADO ÚNICO POR CORREO):
  * ============================================================================
- * 1. En el menú "🎮 SGF 2026 Feedback" de Google Sheets:
- *    Haz clic en "📋 Cargar 171 Participantes a la Hoja".
- *    (Creará la pestaña 'Participantes' con los 171 competidores en estado 'PENDIENTE').
- * 2. Haz clic en "🚀 Enviar Correos a Pendientes".
- *    El script enviará automáticamente los correos personalizados uno a uno,
- *    actualizando el estado a 'ENVIADO' en tiempo real.
+ * - Cada participante que reciba su correo solo puede llenar la encuesta 1 vez.
+ * - Tanto el sitio web como este script verifican si el correo ya fue registrado.
+ * - Si un participante intenta enviar nuevamente, se bloquea el reenvío y se
+ *   le muestra directamente la pantalla de confirmación.
  * ============================================================================
  */
 
 // ============================================================================
-// 1. RECEPTOR WEBHOOK (doPost) - Recibe las respuestas del formulario Vercel
+// 1. RECEPTOR WEBHOOK (doPost) - Recibe las respuestas y evita duplicados
 // ============================================================================
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -52,6 +51,22 @@ function doPost(e) {
     }
 
     var data = JSON.parse(e.postData.contents);
+    var emailRecibido = (data.email || "").trim().toLowerCase();
+
+    // BLOQUEO ANTI-DUPLICADOS: Si el participante ya completó la encuesta, no duplicar fila
+    if (emailRecibido && sheet.getLastRow() > 1) {
+      var correosRegistrados = sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).getValues();
+      for (var k = 0; k < correosRegistrados.length; k++) {
+        if (String(correosRegistrados[k][0]).trim().toLowerCase() === emailRecibido) {
+          return ContentService
+            .createTextOutput(JSON.stringify({ 
+              status: "duplicate", 
+              message: "Este participante ya ha completado la encuesta previamente." 
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
 
     // Si la hoja está vacía, insertar encabezados oficiales
     if (sheet.getLastRow() === 0) {
@@ -78,7 +93,7 @@ function doPost(e) {
       sheet.setFrozenRows(1);
     }
 
-    // Agregar respuesta
+    // Insertar nueva respuesta
     sheet.appendRow([
       data.id || "N/A",
       data.dateFormatted || new Date().toLocaleString(),
@@ -111,14 +126,35 @@ function doPost(e) {
 }
 
 // ============================================================================
-// 2. API DASHBOARD (doGet) - Provee datos en tiempo real al Dashboard Ejecutivo
+// 2. API DASHBOARD + VALIDACIÓN DE CORREO ÚNICO (doGet)
 // ============================================================================
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Respuestas") || ss.getSheets()[0];
-    var rows = sheet.getDataRange().getValues();
 
+    // Endpoint de Verificación en Tiempo Real: ?checkEmail=correo@ejemplo.com
+    if (e && e.parameter && e.parameter.checkEmail) {
+      var targetEmail = String(e.parameter.checkEmail).trim().toLowerCase();
+      var yaRespondio = false;
+
+      if (sheet && sheet.getLastRow() > 1) {
+        var emails = sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).getValues();
+        for (var i = 0; i < emails.length; i++) {
+          if (String(emails[i][0]).trim().toLowerCase() === targetEmail) {
+            yaRespondio = true;
+            break;
+          }
+        }
+      }
+
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: "success", alreadySubmitted: yaRespondio }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Retorno de datos para el Dashboard Ejecutivo
+    var rows = sheet.getDataRange().getValues();
     if (rows.length <= 1) {
       return ContentService
         .createTextOutput(JSON.stringify({ status: "success", count: 0, data: [] }))
@@ -127,11 +163,11 @@ function doGet(e) {
 
     var headers = rows[0];
     var results = [];
-    for (var i = 1; i < rows.length; i++) {
-      var row = rows[i];
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r];
       var item = {};
-      for (var j = 0; j < headers.length; j++) {
-        item[headers[j]] = row[j];
+      for (var c = 0; c < headers.length; c++) {
+        item[headers[c]] = row[c];
       }
       results.push(item);
     }
@@ -148,33 +184,23 @@ function doGet(e) {
 }
 
 // ============================================================================
-// 3. MENÚ SUPERIOR PERSONALIZADO EN GOOGLE SHEETS
+// 3. MENÚ PERSONALIZADO EN GOOGLE SHEETS
 // ============================================================================
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("🎮 SGF 2026 Feedback")
     .addItem("✉️ Enviar Correo de Prueba a Mí...", "menuEnviarPrueba")
     .addSeparator()
-    .addItem("📋 Cargar 171 Participantes a la Hoja", "menuCargarParticipantes")
-    .addItem("🚀 Enviar Correos a Pendientes", "menuEnviarCorreosMasivos")
-    .addSeparator()
     .addItem("📊 Consultar Cuota Diaria Restante", "menuConsultarCuota")
     .addToUi();
 }
 
 // ============================================================================
-// 4. ENVÍO DE PRUEBA RÁPIDO (DESDE EL EDITOR)
+// 4. ENVÍO DE PRUEBA DIRECTA (DESDE EL EDITOR)
 // ============================================================================
-/**
- * Ejecuta esta función directamente en el editor para probar enviándote el correo.
- */
 function enviarPruebaDirecta() {
-  // >>> REEMPLAZA ESTE CORREO POR EL TUYO PARA PROBAR <<<
-  var MI_CORREO_PRUEBA = "tu_correo@gmail.com"; 
-  var MI_GAMERTAG = "Daury (Admin)";
-
-  if (!MI_CORREO_PRUEBA || MI_CORREO_PRUEBA === "tu_correo@gmail.com" || MI_CORREO_PRUEBA.indexOf("@") === -1) {
-    var errorMsg = "⚠️ Por favor escribe tu correo real en la variable 'MI_CORREO_PRUEBA' en la línea superior.";
+  if (!MI_CORREO_VALIDACION || MI_CORREO_VALIDACION === "tu_correo@gmail.com" || MI_CORREO_VALIDACION.indexOf("@") === -1) {
+    var errorMsg = "⚠️ Por favor escribe tu correo real en la variable 'MI_CORREO_VALIDACION' en la línea 11 de este código.";
     Logger.log(errorMsg);
     try {
       SpreadsheetApp.getUi().alert("Configuración Requerida", errorMsg, SpreadsheetApp.getUi().ButtonSet.OK);
@@ -182,20 +208,19 @@ function enviarPruebaDirecta() {
     return;
   }
 
-  Logger.log("Enviando correo de prueba a: " + MI_CORREO_PRUEBA + "...");
-  enviarCorreoIndividual(MI_CORREO_PRUEBA, MI_GAMERTAG);
-  Logger.log("✅ ¡Correo de prueba enviado exitosamente a: " + MI_CORREO_PRUEBA + "!");
+  Logger.log("Enviando correo de validación a: " + MI_CORREO_VALIDACION + "...");
+  enviarCorreoIndividual(MI_CORREO_VALIDACION, MI_GAMERTAG);
+  Logger.log("✅ ¡Correo de prueba enviado con éxito a: " + MI_CORREO_VALIDACION + "!");
 }
 
 // ============================================================================
 // 5. ACCIONES DEL MENÚ DE GOOGLE SHEETS
 // ============================================================================
-
 function menuEnviarPrueba() {
   var ui = SpreadsheetApp.getUi();
   var promptRes = ui.prompt(
-    "✉️ Enviar Correo de Prueba",
-    "Ingresa tu correo electrónico para recibir una muestra idéntica a la que recibirán los participantes:",
+    "✉️ Enviar Correo de Validación",
+    "Ingresa el correo electrónico donde deseas recibir el correo de prueba:",
     ui.ButtonSet.OK_CANCEL
   );
 
@@ -210,10 +235,10 @@ function menuEnviarPrueba() {
   }
 
   try {
-    enviarCorreoIndividual(emailDestino, "Competidor Demo");
+    enviarCorreoIndividual(emailDestino, "Daury (Organizador)");
     ui.alert(
-      "✅ ¡Correo de Prueba Enviado!",
-      "Hemos enviado el correo oficial a: " + emailDestino + "\n\nRevisa tu bandeja de entrada o spam. Comprueba el botón y los enlaces personalizados.",
+      "✅ ¡Correo de Validación Enviado!",
+      "Se ha enviado el correo oficial a: " + emailDestino + "\n\nRevisa tu bandeja de entrada (o carpeta de spam si es la primera vez).",
       ui.ButtonSet.OK
     );
   } catch (err) {
@@ -221,149 +246,19 @@ function menuEnviarPrueba() {
   }
 }
 
-function menuCargarParticipantes() {
-  var ui = SpreadsheetApp.getUi();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Participantes");
-
-  if (!sheet) {
-    sheet = ss.insertSheet("Participantes");
-  } else if (sheet.getLastRow() > 1) {
-    var confirm = ui.alert(
-      "⚠️ Reemplazar Lista",
-      "La pestaña 'Participantes' ya contiene registros. ¿Deseas sobreescribir la lista con los 171 competidores oficiales?",
-      ui.ButtonSet.YES_NO
-    );
-    if (confirm !== ui.Button.YES) return;
-  }
-
-  sheet.clear();
-  sheet.appendRow([
-    "Email",
-    "GamerTag / Nombre",
-    "Estado Envío",
-    "Fecha y Hora de Envío",
-    "Enlace Directo Personalizado"
-  ]);
-
-  var header = sheet.getRange(1, 1, 1, 5);
-  header.setBackground("#16082b");
-  header.setFontColor("#a855f7");
-  header.setFontWeight("bold");
-  sheet.setFrozenRows(1);
-
-  var filas = [];
-  for (var i = 0; i < LISTA_PARTICIPANTES_SGF26.length; i++) {
-    var p = LISTA_PARTICIPANTES_SGF26[i];
-    var urlPersonalizada = "https://sgf26-feedback.vercel.app/?gamertag=" + encodeURIComponent(p.tag) + "&email=" + encodeURIComponent(p.email);
-    filas.push([p.email, p.tag, "PENDIENTE", "", urlPersonalizada]);
-  }
-
-  if (filas.length > 0) {
-    sheet.getRange(2, 1, filas.length, 5).setValues(filas);
-  }
-
-  sheet.autoResizeColumns(1, 5);
-  ui.alert(
-    "✅ 171 Participantes Listos",
-    "Se cargaron los 171 participantes en la pestaña 'Participantes' con estado PENDIENTE.\n\nCuando estés listo, usa el menú '🚀 Enviar Correos a Pendientes'.",
-    ui.ButtonSet.OK
-  );
-}
-
-function menuEnviarCorreosMasivos() {
-  var ui = SpreadsheetApp.getUi();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Participantes");
-
-  if (!sheet || sheet.getLastRow() <= 1) {
-    ui.alert("⚠️ Hoja no preparada", "Primero debes hacer clic en '📋 Cargar 171 Participantes a la Hoja' para crear la lista.", ui.ButtonSet.OK);
-    return;
-  }
-
-  var data = sheet.getDataRange().getValues();
-  var pendientes = [];
-  for (var i = 1; i < data.length; i++) {
-    var estado = String(data[i][2]).trim().toUpperCase();
-    if (estado !== "ENVIADO") {
-      pendientes.push({
-        fila: i + 1,
-        email: String(data[i][0]).trim(),
-        tag: String(data[i][1]).trim()
-      });
-    }
-  }
-
-  if (pendientes.length === 0) {
-    ui.alert("🎉 ¡Completado!", "Todos los 171 participantes ya tienen el correo en estado 'ENVIADO'.", ui.ButtonSet.OK);
-    return;
-  }
-
-  var cuotaRestante = MailApp.getRemainingDailyQuota();
-  var confirm = ui.alert(
-    "🚀 Iniciar Envío Masivo",
-    "Participantes pendientes por enviar: " + pendientes.length + "\n" +
-    "Cuota disponible en tu cuenta hoy: " + cuotaRestante + " correos\n\n" +
-    "¿Deseas comenzar el envío en este momento?",
-    ui.ButtonSet.YES_NO
-  );
-
-  if (confirm !== ui.Button.YES) return;
-
-  var enviados = 0;
-  var fallidos = 0;
-
-  for (var k = 0; k < pendientes.length; k++) {
-    // Si la cuota de Gmail se agota, pausar de forma segura sin romper la hoja
-    if (MailApp.getRemainingDailyQuota() <= 1) {
-      ui.alert(
-        "⚠️ Cuota Diaria Agotada",
-        "Se enviaron " + enviados + " correos exitosamente.\nTu cuenta alcanzó el límite diario de Google. Los restantes se quedaron en 'PENDIENTE' y podrás continuar enviándolos mañana volviendo a presionar este botón.",
-        ui.ButtonSet.OK
-      );
-      break;
-    }
-
-    var item = pendientes[k];
-    try {
-      enviarCorreoIndividual(item.email, item.tag);
-      sheet.getRange(item.fila, 3).setValue("ENVIADO").setBackground("#064e3b").setFontColor("#34d399");
-      sheet.getRange(item.fila, 4).setValue(new Date().toLocaleString());
-      enviados++;
-    } catch (e) {
-      sheet.getRange(item.fila, 3).setValue("ERROR").setBackground("#7f1d1d").setFontColor("#f87171");
-      sheet.getRange(item.fila, 4).setValue(e.toString());
-      fallidos++;
-    }
-
-    // Cada 10 envíos guardar cambios y dar respiro para evitar bloqueos
-    if ((k + 1) % 10 === 0) {
-      SpreadsheetApp.flush();
-      Utilities.sleep(500);
-    }
-  }
-
-  SpreadsheetApp.flush();
-  ui.alert(
-    "🏁 Resumen de Envío",
-    "✅ Enviados con éxito: " + enviados + "\n❌ Errores: " + fallidos + "\n\nPuedes consultar el estado de cada competidor en la pestaña 'Participantes'.",
-    ui.ButtonSet.OK
-  );
-}
-
 function menuConsultarCuota() {
   var cuota = MailApp.getRemainingDailyQuota();
   SpreadsheetApp.getUi().alert(
     "📊 Cuota Diaria de Envíos",
-    "Tu cuenta de Google tiene actualmente " + cuota + " correos restantes disponibles para enviar hoy.\n\n" +
-    "- Cuentas @gmail.com personales: Límite de 100 correos/día.\n" +
-    "- Cuentas Google Workspace / PUCMM: Límite de 1,500 correos/día.",
+    "Tu cuenta de Google tiene actualmente " + cuota + " correos restantes disponibles hoy.\n\n" +
+    "- Cuentas personales @gmail.com: 100 correos/día.\n" +
+    "- Cuentas Google Workspace / PUCMM: 1,500 correos/día.",
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
 
 // ============================================================================
-// 6. NÚCLEO DE ENVÍO DE EMAIL (GmailApp)
+// 6. DISPATCHER DE CORREO ELECTRÓNICO (GmailApp)
 // ============================================================================
 function enviarCorreoIndividual(destinatario, gamertag) {
   var tag = gamertag || "Competidor SGF";
@@ -400,181 +295,3 @@ function obtenerPlantillaEmailHtml(gamertag, email) {
 
   return resultado;
 }
-
-// ============================================================================
-// 8. LISTADO OFICIAL DE 171 PARTICIPANTES DEL SGF 2026
-// ============================================================================
-var LISTA_PARTICIPANTES_SGF26 = [
-  { email: "migueljoseasencio@gmail.com", tag: "Miguel Jose Asencio" },
-  { email: "carlosdgarcia210@gmail.com", tag: "Carlos Daniel García Núñez" },
-  { email: "yorbyssoriano3@gmail.com", tag: "Yorby Enriques Soriano" },
-  { email: "ozmann64@gmail.com", tag: "Oscar Jr Mercado" },
-  { email: "valerioestarlin4tog@gmail.com", tag: "Estarlin Valerio" },
-  { email: "melvinpaulino0019ceges@gmail.com", tag: "Melvin Paulino" },
-  { email: "madarauchija2556@gmail.com", tag: "Raymond Aníbal Vélez Almonte" },
-  { email: "soytolexd@gmail.com", tag: "Soytole" },
-  { email: "hiroshy676@gmail.com", tag: "Hiroshy Luna" },
-  { email: "petercastf14@gmail.com", tag: "Peter Castillo Fernandez" },
-  { email: "manuel.gg130924@gmail.com", tag: "Manuel Alejandro Gil Gómez" },
-  { email: "migueladrian150467@gmail.com", tag: "Miguel Miguel" },
-  { email: "hectorrae0@gmail.com", tag: "Hector Rodriguez" },
-  { email: "jjoaquinvillar01@gmail.com", tag: "Javier José Joaquín Villar" },
-  { email: "enmanuelluz625@gmail.com", tag: "Enmanuel Quzada" },
-  { email: "ricardoarturoguemez@gmail.com", tag: "Ricardo Güémez" },
-  { email: "aa2351807@gmail.com", tag: "Alejandro Correa" },
-  { email: "mcavalierepichardo@gmail.com", tag: "Maria Francesca Cavaliere Pichardo" },
-  { email: "jeanrod2007@gmail.com", tag: "Jean Rodriguez" },
-  { email: "diegobatista112018@gmail.com", tag: "Diego Batista Reyes" },
-  { email: "saludos150196@gmail.com", tag: "Jose Luis Cabrera Ramirez" },
-  { email: "wady178@gmail.com", tag: "Wady Rodríguez" },
-  { email: "jaysongzm@gmail.com", tag: "Jayson Guzman" },
-  { email: "manuelhidalgo246@gmail.com", tag: "Manuel Hidalgo" },
-  { email: "ardymonium@gmail.com", tag: "Joan Vargas" },
-  { email: "karlojuliodejesusgarcia@gmail.com", tag: "Karlo Julio De Jesus Garcia" },
-  { email: "sebastianbencosme17@gmail.com", tag: "Sebastián Bencosme Ovalles" },
-  { email: "Diegobetancourtblanco@gmail.com", tag: "Diego José Betancourt Blanco" },
-  { email: "jisidro1109@gmail.com", tag: "José Isidro Vargas" },
-  { email: "jcangarcia100@gmail.com", tag: "Juan Carlos Garcia" },
-  { email: "diego.rodriguez110111@gmail.com", tag: "Diego Rodriguez" },
-  { email: "reymerpolanco2131@gmail.com", tag: "Reymer Polanco" },
-  { email: "moisesmart2607@gmail.com", tag: "Moisés Martínez" },
-  { email: "elielsalvador.07@gmail.com", tag: "Eliel Salvador Muñoz" },
-  { email: "maryann12334@gmail.com", tag: "Mary Ann Deprat" },
-  { email: "orlandosantiagolizardo12@gmail.com", tag: "Orlando Santiago" },
-  { email: "luisangel9905@gmail.com", tag: "Luis Angel Garcia Perez" },
-  { email: "maderacesar226@gmail.com", tag: "Emmanuel Efrain Sorá Madera" },
-  { email: "alanxd777l3@gmail.com", tag: "Alan Hidalgo" },
-  { email: "odillepatricia30@gmail.com", tag: "Odille Santos" },
-  { email: "carlosmanuelii2111@gmail.com", tag: "Carlos Manuel Ferreira" },
-  { email: "eduardo.hernandez.ma1513@gmail.com", tag: "Eduardo Antonio Hernández Grullón" },
-  { email: "dalicofresi@gmail.com", tag: "Dali Cofresi" },
-  { email: "josuedejesusgg1@gmail.com", tag: "Josue Garcia" },
-  { email: "egrick001@gmail.com", tag: "Erick Gomez Hernandez" },
-  { email: "randall.minaya@gmail.com", tag: "Randall Minaya" },
-  { email: "paulgarcialop@gmail.com", tag: "Paul García" },
-  { email: "geomarac64@gmail.com", tag: "Geomar Abreu" },
-  { email: "abelliard57@gmail.com", tag: "Ángel Belliard" },
-  { email: "adamrguezz@gmail.com", tag: "Adam Rodríguez" },
-  { email: "jcurielurena@gmail.com", tag: "Joel Curiel Ureña" },
-  { email: "jos3phg1133@gmail.com", tag: "Joseph De Jesús Gómez Rodriguez" },
-  { email: "dayamarie08@gmail.com", tag: "Dhayanna Peralta" },
-  { email: "isaacminaya1620@gmail.com", tag: "Isaac Jose Minaya Garcia" },
-  { email: "soribelsantosbritos05@gmail.com", tag: "Soribel Santos" },
-  { email: "kiancisenrique685@gmail.com", tag: "Kiancis Enrique Puello Valerio" },
-  { email: "rodriguezjuandaniel33@gmail.com", tag: "Juan Daniel Rodriguez Sarante" },
-  { email: "pedrito272005@gmail.com", tag: "Pedro Rojas" },
-  { email: "rias0331@gmail.com", tag: "Romario Abreu" },
-  { email: "eg547154@gmail.com", tag: "Enmanuel Guzmán" },
-  { email: "reynaldoac2104@gmail.com", tag: "Reynaldo Álvarez Casado" },
-  { email: "nreyesdoaz332@gmail.com", tag: "Nicole Reyes" },
-  { email: "mendozagarciaj947@gmail.com", tag: "Juan Manuel Mendoza García" },
-  { email: "diegoroca2105@gmail.com", tag: "Diego Roca" },
-  { email: "mauritrez02@gmail.com", tag: "Mauricio Trejo" },
-  { email: "hugoferconcepcion@gmail.com", tag: "Hugo Fernando Concepción López" },
-  { email: "joproxdh@gmail.com", tag: "Josue Rodriguez" },
-  { email: "josero1driguez1@gmail.com", tag: "Randy Rodriguez" },
-  { email: "luisandresdp@gmail.com", tag: "Luis Andres Duran Perez" },
-  { email: "claudialan024@gmail.com", tag: "Claudia Lantigua" },
-  { email: "liamgivanom@gmail.com", tag: "Liam Monción Lora" },
-  { email: "rayanbm1917@gmail.com", tag: "Rayan Betances" },
-  { email: "jandelventura.04@gmail.com", tag: "Jandel Tavarez" },
-  { email: "josemlora1916@gmail.com", tag: "José Miguel Lora Peña" },
-  { email: "jorge13.jr77@gmail.com", tag: "Jorge Luis Ramirez Carela" },
-  { email: "naiobyabreu@gmail.com", tag: "Naioby Abreu" },
-  { email: "mesquita.jeancarlos@gmail.com", tag: "Jean Carlos Mesquita Peña" },
-  { email: "ardaving@gmail.com", tag: "George Ardavin" },
-  { email: "davrosario09@gmail.com", tag: "David Rosario" },
-  { email: "carloseduardo13055@hotmail.com", tag: "Carlos Eduardo Ferreira" },
-  { email: "arturorodriguezuz003@gmail.com", tag: "Arturo Rodríguez" },
-  { email: "jairoeliezerm@gmail.com", tag: "Jairo Martinez" },
-  { email: "alexenmanuelsrb@gmail.com", tag: "Enmanuel Suarez Beato" },
-  { email: "fidelferreiramorel@gmail.com", tag: "Fidel Ferreira" },
-  { email: "javierabbottg@gmail.com", tag: "Javier Abbott" },
-  { email: "adrianhidalgo714@gmail.com", tag: "Adrián Hidalgo" },
-  { email: "nelsonarutnev@gmail.com", tag: "Nelson Ventura" },
-  { email: "gabrielcepeda2007@gmail.com", tag: "Gabriel Cepeda" },
-  { email: "asdrubaltejada2015@gmail.com", tag: "Asdruval Tejada" },
-  { email: "leandroj21p@gmail.com", tag: "Leandro Jiménez" },
-  { email: "gariasdisla@gmail.com", tag: "José David Arias" },
-  { email: "rhandyemmanuels@gmail.com", tag: "Rhandy Emmanuel Saldivar Castillo" },
-  { email: "LMGP0003@CE.PUCMM.EDU.DO", tag: "Leslie Grullon" },
-  { email: "isael.estevez2@gmail.com", tag: "Isael Valerio" },
-  { email: "deht0001@ce.pucmm.edu.do", tag: "Darlyn Hernández" },
-  { email: "nreartejimenez@gmail.com", tag: "Nahuel Rearte" },
-  { email: "joshepmperalta@gmail.com", tag: "Joseph Peralta" },
-  { email: "adrianalexanderartiles@gmail.com", tag: "Adrian Artiles" },
-  { email: "camilan0311@gmail.com", tag: "Camila Nuñez" },
-  { email: "wjge0001@ce.pucmm.edu.do", tag: "Wilson Jose Garcia Estrella" },
-  { email: "francistrinidadtrejo17@gmail.com", tag: "Francisco Trinidad" },
-  { email: "roddypaulino8@gmail.com", tag: "Roddy Paulino" },
-  { email: "emilalejandrop@gmail.com", tag: "Emil Peralta" },
-  { email: "gabriedlcm05@gmail.com", tag: "Gabriel De La Cruz Marte" },
-  { email: "iamemanuel30@gmail.com", tag: "Emanuel Isaias Martinez Garcia" },
-  { email: "marino_0901@outlook.com", tag: "Marino Rafael García Fadul" },
-  { email: "mishael.tavarez@gmail.com", tag: "Mishael Tavarez" },
-  { email: "theyuridr_ceit_pucmm@aiyuri.pro", tag: "Ai Yuri" },
-  { email: "claudioa0907@gmail.com", tag: "Claudio Yciano" },
-  { email: "egarcofresi212@gmail.com", tag: "Egar Cofresi" },
-  { email: "emmanuelrosariof20@gmail.com", tag: "Emmanuel Rosario Fermín" },
-  { email: "guarionex6686@gmail.com", tag: "Guarionex Gomez" },
-  { email: "arifranches15@gmail.com", tag: "Arianny Roque" },
-  { email: "nanoabreu07@gmail.com", tag: "Jorge Abreu" },
-  { email: "dionisrodriguezziea@gmail.com", tag: "Dionis Rodríguez" },
-  { email: "luisjulianbaez@gmail.com", tag: "Luis Alfonso Julian Baez" },
-  { email: "armandooyt@gmail.com", tag: "Narciso Leon" },
-  { email: "andrewbatistagarcia@gmail.com", tag: "Andrew Batista Garcia" },
-  { email: "samidcc26@gmail.com", tag: "Samid Castillo" },
-  { email: "jesuseng08@gmail.com", tag: "Jesús Núñez" },
-  { email: "caryfernandez9@gmail.com", tag: "Kary Esther Fernandez Solino" },
-  { email: "jonasfuertespsp@gmail.com", tag: "Amohos Ovalles Fuertes" },
-  { email: "anthonygarcoia09@gmail.com", tag: "Anthony García" },
-  { email: "najavyuz10@gmail.com", tag: "Najavy Ureña" },
-  { email: "jailanisburgosquezada@gmail.com", tag: "Jailanis Burgos" },
-  { email: "estrellasalcedo.aj@gmail.com", tag: "Adrian Estrella" },
-  { email: "bryannaquezada761@gmail.com", tag: "Meredich González" },
-  { email: "cynthiagg126@gmail.com", tag: "Cynthia Gómez" },
-  { email: "jamespumeran@gmail.com", tag: "James Flores" },
-  { email: "jeretejadar@gmail.com", tag: "Jeremias Tejada" },
-  { email: "meiverr733@gmail.com", tag: "Exmeiver Gavides Paulino" },
-  { email: "cb.lebron@gmail.com", tag: "Eduardo Ramirez" },
-  { email: "bumatthew679@gmail.com", tag: "Matthew Daniel Buceta Abreu" },
-  { email: "sbrach29@gmail.com", tag: "Said Compres" },
-  { email: "freudy0108@gmail.com", tag: "Freudy Cuevas" },
-  { email: "foast584@gmail.com", tag: "Camell Marié Tejada Pérez" },
-  { email: "isaacvalerio29@gmail.com", tag: "Isaac Valerio" },
-  { email: "albertduran.d.m.a@gmail.com", tag: "Albert Duran Mora" },
-  { email: "brandolesbo@hotmail.com", tag: "Brandol Estevez Bonilla" },
-  { email: "Peliculasespanolatino@gmail.com", tag: "Estarly Almanzar" },
-  { email: "joexgarcia2207@gmail.com", tag: "Joel Garcia" },
-  { email: "raulrios27062008@gmail.com", tag: "Raul Rios" },
-  { email: "wilovergomez9@gmail.com", tag: "Wilover Gomez" },
-  { email: "alfred.miguel.mdina927@gmail.com", tag: "Alfred Chelo" },
-  { email: "lxlroberto@gmail.com", tag: "Roberto Santana" },
-  { email: "diegosalcedoc22@gmail.com", tag: "Diego Salcedo" },
-  { email: "yvesdany63@gmail.com", tag: "Yves Dany" },
-  { email: "rodqzstarlin@gmail.com", tag: "Starli. Rodriguez" },
-  { email: "marioalfredo.deleon22@gmail.com", tag: "Mario De León" },
-  { email: "manensolrod@gmail.com", tag: "Manuel Solano" },
-  { email: "victorarcal1@gmail.com", tag: "Victor Rodriguez" },
-  { email: "carlos.dgez@gmail.com", tag: "Carlos Domínguez" },
-  { email: "nayhat.javier@gmail.com", tag: "Nayhat Javier" },
-  { email: "marcos.david.dominguez@gmail.com", tag: "Marcos Dominguez" },
-  { email: "yandelluis.taverasdiaz18@gmail.com", tag: "Yandel Luis Taveras Díaz" },
-  { email: "miguelwilliamsfelizferreiras@gmail.com", tag: "Miguel Williams Feliz Ferreiras" },
-  { email: "felizkrlos@gmail.com", tag: "Karlos Feliz" },
-  { email: "reynardomartinezh@gmail.com", tag: "Reynardo Martinez" },
-  { email: "robertcrack007@gmail.com", tag: "Robert Junior Abreu Suero" },
-  { email: "emilioalejandrodc@gmail.com", tag: "Emilio Dominguez" },
-  { email: "kventura16_6@hotmail.com", tag: "Karina Ventura Rodríguez" },
-  { email: "angelramos180602@gmail.com", tag: "Angel Ernesto Ramos" },
-  { email: "gomezstanley754@gmail.com", tag: "Stanley Gomez" },
-  { email: "xaviermorel00701@gmail.com", tag: "Xavier Morel" },
-  { email: "Delvie16@outlook.com", tag: "Delvi Garcia" },
-  { email: "demianreynosogomez@gmail.com", tag: "Demian Reynoso" },
-  { email: "albertrozon27@gmail.com", tag: "Albert Rozón Batista" },
-  { email: "m.vasquez0606@gmail.com", tag: "Misael Vásquez" },
-  { email: "rensogabrielr@gmail.com", tag: "Renso Gabriel Rodríguez Ureña" },
-  { email: "seniaarzola20@gmail.com", tag: "Senia Arzola" },
-  { email: "reyessaulfd@gmail.com", tag: "Reyes Saul Fernandez" },
-
-];

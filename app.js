@@ -120,11 +120,31 @@ function initAll() {
 }
 
 function checkExistingSubmission() {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = (params.get("email") || params.get("correo") || "").toLowerCase().trim();
     const isSubmitted = localStorage.getItem("sgf26_user_feedback_submitted") === "true";
-    if (isSubmitted) {
-        const savedTag = localStorage.getItem("sgf26_submitted_gamertag") || "Competidor";
+    const isEmailSubmittedLocally = emailParam && localStorage.getItem("sgf26_submitted_email_" + emailParam) === "true";
+
+    if (isSubmitted || isEmailSubmittedLocally) {
+        const savedTag = localStorage.getItem("sgf26_submitted_gamertag") || params.get("gamertag") || "Competidor";
         const savedGame = localStorage.getItem("sgf26_submitted_game") || "";
         showSuccessView({ gamertag: savedTag, tournament: savedGame }, false);
+        return;
+    }
+
+    // Verificación remota en tiempo real: Si abrió el link en otro dispositivo o ventana privada, consultar Google Sheets
+    if (emailParam && GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.trim().length > 10) {
+        fetch(`${GOOGLE_SHEETS_WEBHOOK_URL}?checkEmail=${encodeURIComponent(emailParam)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.alreadySubmitted) {
+                    localStorage.setItem("sgf26_user_feedback_submitted", "true");
+                    localStorage.setItem("sgf26_submitted_email_" + emailParam, "true");
+                    const tag = params.get("gamertag") || "Competidor";
+                    showSuccessView({ gamertag: tag, tournament: "" }, false);
+                }
+            })
+            .catch(() => {});
     }
 }
 
@@ -146,10 +166,15 @@ function initUrlParams() {
         inpGamertag.value = decodeURIComponent(tag.trim());
     }
 
-    // Email
+    // Email (si viene por parámetro en el enlace de correo, queda fijado y protegido)
     const email = params.get("email") || params.get("correo");
     if (email && inpEmail) {
-        inpEmail.value = decodeURIComponent(email.trim());
+        const cleanEmail = decodeURIComponent(email.trim());
+        inpEmail.value = cleanEmail;
+        inpEmail.setAttribute("readonly", "true");
+        inpEmail.style.opacity = "0.85";
+        inpEmail.style.borderColor = "rgba(168, 85, 247, 0.6)";
+        inpEmail.title = "Correo de participante verificado oficialmente";
     }
 
     // Torneo / Juego
@@ -493,10 +518,13 @@ if (form) {
             // 1. Guardar localmente siempre (garantiza respaldo inmediato)
             saveSubmissionLocally(payload);
 
-            // 2. Bloquear repetición de encuesta en este equipo/navegador
+            // 2. Bloquear repetición de encuesta en este equipo/navegador y por correo
             localStorage.setItem("sgf26_user_feedback_submitted", "true");
             localStorage.setItem("sgf26_submitted_gamertag", finalTag);
             localStorage.setItem("sgf26_submitted_game", game);
+            if (email) {
+                localStorage.setItem("sgf26_submitted_email_" + email.toLowerCase(), "true");
+            }
 
             // 3. Enviar a Google Sheets Webhook si está configurado
             if (GOOGLE_SHEETS_WEBHOOK_URL && GOOGLE_SHEETS_WEBHOOK_URL.trim().length > 10) {
