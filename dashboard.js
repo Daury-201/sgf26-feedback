@@ -158,9 +158,9 @@ function initControls() {
     const btnRefresh = document.getElementById("btn-refresh-data");
     const btnExport = document.getElementById("btn-export-csv");
 
-    if (tournamentFilter) tournamentFilter.addEventListener("change", applyFilters);
-    if (ratingFilter) ratingFilter.addEventListener("change", applyFilters);
-    if (searchFilter) searchFilter.addEventListener("input", debounce(applyFilters, 250));
+    if (tournamentFilter) tournamentFilter.addEventListener("change", () => applyFilters(true));
+    if (ratingFilter) ratingFilter.addEventListener("change", () => applyFilters(true));
+    if (searchFilter) searchFilter.addEventListener("input", debounce(() => applyFilters(true), 250));
 
     if (btnRefresh) {
         btnRefresh.addEventListener("click", async () => {
@@ -283,7 +283,7 @@ async function loadDashboardData(isBackground = false) {
 
     // Los datos reflejados son EXCLUSIVAMENTE los que están en Google Sheets
     allResponses = combined;
-    applyFilters();
+    applyFilters(false);
 
     // Actualizar indicador de fuente
     const sourceInd = document.getElementById("source-indicator");
@@ -295,8 +295,8 @@ async function loadDashboardData(isBackground = false) {
 // =========================================================================
 // 4. FILTRADO DINÁMICO
 // =========================================================================
-function applyFilters(resetPage = true) {
-    if (resetPage) {
+function applyFilters(resetPage = false) {
+    if (resetPage === true) {
         currentTablePage = 1;
         currentQuotesPage = 1;
     }
