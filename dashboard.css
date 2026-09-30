@@ -634,12 +634,6 @@ html, body.dashboard-body {
     transition: transform 0.2s, border-color 0.2s;
     position: relative;
     overflow: hidden;
-    animation: quoteCardFade 0.25s ease-out;
-}
-
-@keyframes quoteCardFade {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .quotes-pagination {

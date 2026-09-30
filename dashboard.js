@@ -28,6 +28,7 @@ let currentTablePage = 1;
 // Paginación de Opiniones / Muro de Feedback (6 testimonios por página)
 const QUOTES_PAGE_SIZE = 6;
 let currentQuotesPage = 1;
+let lastDataFingerprint = "";
 
 // Instancias de Chart.js
 let chartStars = null;
@@ -140,10 +141,10 @@ function initDashboard() {
     initControls();
     loadDashboardData();
 
-    // Sincronización automática periódica cada 10 segundos
+    // Sincronización automática periódica en segundo plano cada 30 segundos
     setInterval(() => {
         loadDashboardData(true);
-    }, 10000);
+    }, 30000);
 
     // Sincronización automática instantánea al regresar a esta pestaña
     window.addEventListener("focus", () => {
@@ -258,6 +259,14 @@ async function loadDashboardData(isBackground = false) {
                         const stars = r["Calificación General"] || r.overallRating;
                         return tag !== "" || email !== "" || (stars !== "" && stars !== undefined);
                     });
+
+                    // Detectar si los datos realmente cambiaron antes de re-procesar
+                    const currentFingerprint = JSON.stringify(validData);
+                    if (isBackground && currentFingerprint === lastDataFingerprint) {
+                        // Los datos son idénticos; salir silenciosamente sin tocar el DOM ni parpadear
+                        return;
+                    }
+                    lastDataFingerprint = currentFingerprint;
 
                     combined = validData.map(r => ({
                         dateFormatted: r["Fecha Registro"] || r.dateFormatted || "Reciente",
@@ -550,49 +559,54 @@ function renderCharts() {
 
     const ctxStars = document.getElementById("chart-stars")?.getContext("2d");
     if (ctxStars) {
-        if (chartStars) chartStars.destroy();
-        chartStars = new Chart(ctxStars, {
-            type: "bar",
-            data: {
-                labels: ["1 ⭐ Deficiente", "2 ⭐ Regular", "3 ⭐ Bueno", "4 ⭐ Muy Bueno", "5 ⭐ Legendario"],
-                datasets: [{
-                    label: "Votos Reales",
-                    data: [starCounts[1], starCounts[2], starCounts[3], starCounts[4], starCounts[5]],
-                    backgroundColor: [
-                        "rgba(244, 63, 94, 0.75)",
-                        "rgba(249, 115, 22, 0.75)",
-                        "rgba(59, 130, 246, 0.75)",
-                        "rgba(168, 85, 247, 0.75)",
-                        "rgba(245, 158, 11, 0.9)"
-                    ],
-                    borderColor: [
-                        "#f43f5e",
-                        "#f97316",
-                        "#3b82f6",
-                        "#a855f7",
-                        "#f59e0b"
-                    ],
-                    borderWidth: 2,
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: commonPlugins,
-                scales: {
-                    x: {
-                        ticks: { color: "#94a3b8", font: { family: "Montserrat", size: 11 } },
-                        grid: { display: false }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: "#64748b", stepSize: 1 },
-                        grid: { color: "rgba(168, 85, 247, 0.1)" }
+        const starValues = [starCounts[1], starCounts[2], starCounts[3], starCounts[4], starCounts[5]];
+        if (chartStars) {
+            chartStars.data.datasets[0].data = starValues;
+            chartStars.update("none");
+        } else {
+            chartStars = new Chart(ctxStars, {
+                type: "bar",
+                data: {
+                    labels: ["1 ⭐ Deficiente", "2 ⭐ Regular", "3 ⭐ Bueno", "4 ⭐ Muy Bueno", "5 ⭐ Legendario"],
+                    datasets: [{
+                        label: "Votos Reales",
+                        data: starValues,
+                        backgroundColor: [
+                            "rgba(244, 63, 94, 0.75)",
+                            "rgba(249, 115, 22, 0.75)",
+                            "rgba(59, 130, 246, 0.75)",
+                            "rgba(168, 85, 247, 0.75)",
+                            "rgba(245, 158, 11, 0.9)"
+                        ],
+                        borderColor: [
+                            "#f43f5e",
+                            "#f97316",
+                            "#3b82f6",
+                            "#a855f7",
+                            "#f59e0b"
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: commonPlugins,
+                    scales: {
+                        x: {
+                            ticks: { color: "#94a3b8", font: { family: "Montserrat", size: 11 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: "#64748b", stepSize: 1 },
+                            grid: { color: "rgba(168, 85, 247, 0.1)" }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // 2. Chart: Radar Logístico y Operativo
@@ -619,45 +633,50 @@ function renderCharts() {
 
     const ctxRadar = document.getElementById("chart-radar")?.getContext("2d");
     if (ctxRadar) {
-        if (chartRadar) chartRadar.destroy();
-        chartRadar = new Chart(ctxRadar, {
-            type: "radar",
-            data: {
-                labels: ["Puntualidad", "Hardware y Setups", "Staff y Jueces", "Ambiente y Audio"],
-                datasets: [{
-                    label: "Evaluación Operativa",
-                    data: [avgP, avgH, avgS, avgA],
-                    backgroundColor: "rgba(6, 182, 212, 0.25)",
-                    borderColor: "#06b6d4",
-                    borderWidth: 2,
-                    pointBackgroundColor: "#67e8f9",
-                    pointBorderColor: "#ffffff",
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: commonPlugins,
-                scales: {
-                    r: {
-                        angleLines: { color: "rgba(168, 85, 247, 0.2)" },
-                        grid: { color: "rgba(168, 85, 247, 0.15)" },
-                        pointLabels: {
-                            color: "#c084fc",
-                            font: { family: "Orbitron", size: 11, weight: 700 }
-                        },
-                        ticks: {
-                            backdropColor: "transparent",
-                            color: "#64748b",
-                            stepSize: 1,
-                            min: 0,
-                            max: 5
+        const radarValues = [avgP, avgH, avgS, avgA];
+        if (chartRadar) {
+            chartRadar.data.datasets[0].data = radarValues;
+            chartRadar.update("none");
+        } else {
+            chartRadar = new Chart(ctxRadar, {
+                type: "radar",
+                data: {
+                    labels: ["Puntualidad", "Hardware y Setups", "Staff y Jueces", "Ambiente y Audio"],
+                    datasets: [{
+                        label: "Evaluación Operativa",
+                        data: radarValues,
+                        backgroundColor: "rgba(6, 182, 212, 0.25)",
+                        borderColor: "#06b6d4",
+                        borderWidth: 2,
+                        pointBackgroundColor: "#67e8f9",
+                        pointBorderColor: "#ffffff",
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: commonPlugins,
+                    scales: {
+                        r: {
+                            angleLines: { color: "rgba(168, 85, 247, 0.2)" },
+                            grid: { color: "rgba(168, 85, 247, 0.15)" },
+                            pointLabels: {
+                                color: "#c084fc",
+                                font: { family: "Orbitron", size: 11, weight: 700 }
+                            },
+                            ticks: {
+                                backdropColor: "transparent",
+                                color: "#64748b",
+                                stepSize: 1,
+                                min: 0,
+                                max: 5
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // 3. Chart: Participación por Torneo (Doughnut)
@@ -679,38 +698,48 @@ function renderCharts() {
 
     const ctxTournaments = document.getElementById("chart-tournaments")?.getContext("2d");
     if (ctxTournaments) {
-        if (chartTournaments) chartTournaments.destroy();
-        chartTournaments = new Chart(ctxTournaments, {
-            type: "doughnut",
-            data: {
-                labels: tourLabels.length > 0 ? tourLabels : ["Sin Respuestas"],
-                datasets: [{
-                    data: tourData.length > 0 ? tourData : [1],
-                    backgroundColor: tourData.length > 0 ? [
-                        "#ef4444", "#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#a855f7"
-                    ] : ["rgba(255, 255, 255, 0.08)"],
-                    borderColor: "#090314",
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: "65%",
-                plugins: {
-                    ...commonPlugins,
-                    legend: {
-                        position: "bottom",
-                        labels: {
-                            color: "#94a3b8",
-                            boxWidth: 12,
-                            padding: 12,
-                            font: { family: "Montserrat", size: 11 }
+        const labelsToUse = tourLabels.length > 0 ? tourLabels : ["Sin Respuestas"];
+        const dataToUse = tourData.length > 0 ? tourData : [1];
+        const bgColors = tourData.length > 0 ? [
+            "#ef4444", "#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#a855f7"
+        ] : ["rgba(255, 255, 255, 0.08)"];
+
+        if (chartTournaments) {
+            chartTournaments.data.labels = labelsToUse;
+            chartTournaments.data.datasets[0].data = dataToUse;
+            chartTournaments.data.datasets[0].backgroundColor = bgColors;
+            chartTournaments.update("none");
+        } else {
+            chartTournaments = new Chart(ctxTournaments, {
+                type: "doughnut",
+                data: {
+                    labels: labelsToUse,
+                    datasets: [{
+                        data: dataToUse,
+                        backgroundColor: bgColors,
+                        borderColor: "#090314",
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "65%",
+                    plugins: {
+                        ...commonPlugins,
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                color: "#94a3b8",
+                                boxWidth: 12,
+                                padding: 12,
+                                font: { family: "Montserrat", size: 11 }
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // 4. Chart: Desglose NPS (Promotores vs Pasivos vs Detractores)
@@ -725,41 +754,51 @@ function renderCharts() {
 
     const ctxNps = document.getElementById("chart-nps")?.getContext("2d");
     if (ctxNps) {
-        if (chartNps) chartNps.destroy();
-        chartNps = new Chart(ctxNps, {
-            type: "pie",
-            data: {
-                labels: [
-                    `Promotores: ${npsProm}`,
-                    `Pasivos: ${npsPass}`,
-                    `Detractores: ${npsDet}`
-                ],
-                datasets: [{
-                    data: (npsProm + npsPass + npsDet > 0) ? [npsProm, npsPass, npsDet] : [0, 0, 1],
-                    backgroundColor: (npsProm + npsPass + npsDet > 0) ? [
-                        "#10b981", "#f59e0b", "#f43f5e"
-                    ] : ["rgba(255, 255, 255, 0.08)"],
-                    borderColor: "#090314",
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    ...commonPlugins,
-                    legend: {
-                        position: "bottom",
-                        labels: {
-                            color: "#94a3b8",
-                            boxWidth: 12,
-                            padding: 12,
-                            font: { family: "Montserrat", size: 11 }
+        const npsLabels = [
+            `Promotores: ${npsProm}`,
+            `Pasivos: ${npsPass}`,
+            `Detractores: ${npsDet}`
+        ];
+        const npsData = (npsProm + npsPass + npsDet > 0) ? [npsProm, npsPass, npsDet] : [0, 0, 1];
+        const npsBg = (npsProm + npsPass + npsDet > 0) ? [
+            "#10b981", "#f59e0b", "#f43f5e"
+        ] : ["rgba(255, 255, 255, 0.08)"];
+
+        if (chartNps) {
+            chartNps.data.labels = npsLabels;
+            chartNps.data.datasets[0].data = npsData;
+            chartNps.data.datasets[0].backgroundColor = npsBg;
+            chartNps.update("none");
+        } else {
+            chartNps = new Chart(ctxNps, {
+                type: "pie",
+                data: {
+                    labels: npsLabels,
+                    datasets: [{
+                        data: npsData,
+                        backgroundColor: npsBg,
+                        borderColor: "#090314",
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        ...commonPlugins,
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                color: "#94a3b8",
+                                boxWidth: 12,
+                                padding: 12,
+                                font: { family: "Montserrat", size: 11 }
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 }
 
@@ -853,7 +892,7 @@ function renderQuotes() {
         paginationNumbers.innerHTML = pagesHtml;
     }
 
-    container.innerHTML = pageQuotes.map(r => {
+    const quotesHtml = pageQuotes.map(r => {
         const text = currentTab === "liked" ? r.likedMost : r.suggestions;
         const tag = currentTab === "liked" ? "Destacado del Festival" : "Sugerencia SGF 2027";
         return `
@@ -867,6 +906,10 @@ function renderQuotes() {
             </div>
         `;
     }).join("");
+
+    if (container.innerHTML !== quotesHtml) {
+        container.innerHTML = quotesHtml;
+    }
 }
 
 // Handlers de Paginación de Opiniones
@@ -952,7 +995,7 @@ function renderTable() {
         paginationNumbers.innerHTML = pagesHtml;
     }
 
-    tbody.innerHTML = pageRecords.map(r => {
+    const tableHtml = pageRecords.map(r => {
         const stars = parseInt(r.overallRating, 10) || 5;
         const starsHtml = `<span class="star-rating-cell">${stars} <i class="fa-solid fa-star"></i></span>`;
 
@@ -1020,6 +1063,10 @@ function renderTable() {
             </tr>
         `;
     }).join("");
+
+    if (tbody.innerHTML !== tableHtml) {
+        tbody.innerHTML = tableHtml;
+    }
 }
 
 // Handlers de Paginación
